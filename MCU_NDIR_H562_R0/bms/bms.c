@@ -2,7 +2,29 @@
 
 const uint8_t bq40z50DeviceAddress  = 0x55;//0x0B;
 
-
+//#define BQ40Z50_TEMPERATURE              0x08
+//#define BQ40Z50_VOLTAGE                  0x09
+//#define BQ40Z50_CURRENT                  0x0A
+//#define BQ40Z50_AVERAGE_CURRENT          0x0B
+//#define BQ40Z50_MAX_ERROR                0x0C
+//#define BQ40Z50_RELATIVE_STATE_OF_CHARGE 0x0D
+//#define BQ40Z50_ABSOLUTE_STATE_OF_CHARGE 0x0E
+//#define BQ40Z50_REMAINING_CAPACITY       0x0F
+//#define BQ40Z50_FULL_CHARGE_CAPACITY     0x10
+//#define BQ40Z50_RUNTIME_TO_EMPTY         0x11
+//#define BQ40Z50_AVERAGE_TIME_TO_EMPTY    0x12
+//#define BQ40Z50_AVERAGE_TIME_TO_FULL     0x13
+//#define BQ40Z50_CHARGING_CURRENT         0x14
+//#define BQ40Z50_CHARGING_VOLTAGE         0x15
+//#define BQ40Z50_BATTERY_STATUS           0x16
+//#define BQ40Z50_CYCLE_COUNT              0x17
+//#define BQ40Z50_DESIGN_VOLTAGE           0x19
+//#define BQ40Z50_CELL_VOLTAGE_1           0x3F
+//#define BQ40Z50_CELL_VOLTAGE_2           0x3E
+//#define BQ40Z50_CELL_VOLTAGE_3           0x3D
+//#define BQ40Z50_CELL_VOLTAGE_4           0x3C
+//#define BQ40Z50_OPERATION_STATUS         0x41
+//#define BQ40Z50_PACK_STATUS              0x45
 
 #define BQ40Z50_TEMPERATURE              0x06
 #define BQ40Z50_VOLTAGE                  0x08

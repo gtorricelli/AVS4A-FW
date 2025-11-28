@@ -1,0 +1,295 @@
+/*
+ * shell.c
+ *
+ *  Created on: 04/dic/2011
+ *      Author: Rodolfo Facchini
+ */
+#include "shell.h"
+
+#include <stdio.h>
+#include <string.h>
+#include "bsp.h"
+#include "errno.h"
+
+#include "kedOS.h"
+#include "print.h"
+
+static char     shell_cmd[100];
+static char     shell_cmd_history[10][100];
+static bool_t   gb_shell_process_active;
+static void*    g_exec_function;
+static bool_t   g_bShellEnabled;
+
+/* USER CODE BEGIN 1 */
+
+char * ConsoleStrTok( char *strToken )
+{
+    // Where to start searching next
+    static char *pNext;
+    // Start of next token
+    char *pStart;
+
+    // If NULL is passed in, continue searching
+    if ( strToken == NULL ) {
+        if ( pNext != NULL ) {
+            strToken = pNext;
+        } else {
+            // Reached end of original string
+            return NULL;
+        }
+    }
+
+    // Zero length string, so no more tokens to be found
+    if ( *strToken == 0 ) {
+        pNext = NULL;
+        return NULL;
+    }
+
+    // Skip leading whitespace before next token
+    while (    (*strToken == ' ') || (*strToken == '\t')
+            || (*strToken == '\n') ) {
+
+        ++strToken;
+    }
+
+    // It's a quoted literal - skip the first quote char
+    if ( *strToken == '\"' ) {
+        ++strToken;
+
+        pStart = strToken;
+
+        // Find ending quote or end of string
+        while ( (*strToken != '\"') && (*strToken != 0) ) {
+            ++strToken;
+        }
+
+        if ( *strToken == 0 ) {
+            // Reached end of original string
+            pNext = NULL;
+        } else {
+            // More to find, note where to continue searching
+            *strToken = 0;
+            pNext = strToken + 1;
+        }
+
+    } else {
+        // Unquoted token
+        pStart = strToken;
+
+        // Find next whitespace delimiter or end of string
+        while ( (*strToken != 0) && (*strToken != ' ') &&
+                (*strToken != '\t') && (*strToken != '\n' ) ) {
+            ++strToken;
+        }
+
+        // Reached end of original string?
+        if ( *strToken == 0 ) {
+            pNext = NULL;
+        } else {
+            *strToken = 0;
+            pNext = strToken + 1;
+        }
+        return pStart;
+    }
+
+    // Return ptr to start of token
+    return pStart;
+}
+void ShellInit()
+{
+    uint8_t i,j;
+    gb_shell_process_active = FALSE;;
+    g_exec_function = NULL;
+    g_bShellEnabled = FALSE;
+
+    for(i=0;i<10;i++)
+        for(j=0;j<100;j++)
+            shell_cmd_history[i][j]='\0';
+
+    for(j=0;j<100;j++)
+        shell_cmd[j] = 0;
+
+//    printf(CLS CURPOS(0,0) ATTR_FRED "\r\nKedOS Start Application \r\n\r\n" );
+//    printf(ATTR_FGREEN);
+//    printf("\r\n");
+    printshell();
+    ShellEnable();
+}
+void   ShellEnable()
+{
+    g_bShellEnabled = TRUE;
+}
+void   ShellDisable()
+{
+    g_bShellEnabled = FALSE;
+}
+
+void   launch_shell_process(void* func)
+{
+    if(func == NULL) return;
+
+    gb_shell_process_active = TRUE;
+    g_exec_function = func;
+    add_mainloop_funct(func, "shell_cmd\0",0,0);
+}
+static void kill_shell_process(void)
+{
+    if(g_exec_function == NULL) return;
+
+    gb_shell_process_active = FALSE;
+    remove_mainloop_funct(g_exec_function);
+    g_exec_function = NULL;
+}
+
+static char shellpromp[]="cmd> ";
+void printshell()
+{
+	int i;
+    for(i=0;i<5;i++)
+    {
+        __io_putchar(shellpromp[i]);
+    }
+}
+void printstring(char* str)
+{
+	int i;
+	int len = strlen(str);
+    for(i=0;i<len;i++)
+    {
+        __io_putchar(str[i]);
+    }
+}
+static int gShellChar = 0;
+static int gShellCharReady = 0;
+
+int    getShellProcessChar()
+{
+	if(gShellCharReady > 0)
+	{
+		gShellCharReady = 0;
+		return gShellChar;
+	}
+	return -1;
+}
+char * ShellProcess()
+{
+    static uint8_t  history_pos_w = 0;
+    static uint8_t  history_pos_r = 0;
+    static uint8_t  flag_hyst_st = 0;
+    static bool_t   flag_hyst    = FALSE;
+    static uint16_t cmd_p = 0;
+    uint8_t c;
+    uint8_t i,j;
+    int32_t res;
+
+
+    res = __io_getchar();
+    if(res < 0 )
+    {
+        return NULL;
+    }
+    c = res;
+    if(gb_shell_process_active == TRUE)
+    {
+        if(c==3)//CTRL+C
+        {
+            kill_shell_process();
+            gb_shell_process_active = FALSE;
+            for(j=0;j<100;j++)
+                shell_cmd[j] = 0;
+            cmd_p = 0;
+            printshell();
+        }
+        else
+        {
+        	gShellChar = c;
+        	gShellCharReady = 1;
+        }
+        return NULL;
+    }
+
+
+    if(c != '\r' && c != '\n')
+    {
+//        if(c==27)
+//        {
+//            flag_hyst    = TRUE;
+//            flag_hyst_st = 0;
+//            return NULL;
+//        }
+//        if(flag_hyst == TRUE)
+//        {
+//            flag_hyst_st++;
+//            if(flag_hyst_st < 2)
+//                return NULL;
+//            flag_hyst = FALSE;
+//
+//            for(j=0;j<100;j++)
+//                shell_cmd[j]='\0';
+//            cmd_p = 0;
+//
+//            printstring(ERASE_LN);
+//            printshell();
+//
+//            for(i=0;i<100;i++)
+//            {
+//                shell_cmd[i] = shell_cmd_history[history_pos_r][i];
+//                if (shell_cmd[i] == '\0')
+//                    break;
+//                cmd_p++;
+//                __io_putchar(shell_cmd[i]);
+//            }
+//
+//            if(c == 'A')
+//            {
+//                if(history_pos_r == 0)
+//                    history_pos_r = 9;
+//                else
+//                    history_pos_r--;
+//            }
+//            else if(c=='B')
+//            {
+//                history_pos_r++;
+//                if(history_pos_r > 9)
+//                    history_pos_r = 0;
+//            }
+//
+//            return NULL;
+//        }
+//        else
+        if (c == '\b') {
+            if (cmd_p > 0)
+                cmd_p--;
+            __io_putchar('\b');
+            __io_putchar(' ');
+        }
+        else
+        {
+            shell_cmd[cmd_p] = c;
+            cmd_p++;
+            if(cmd_p > 99)
+                cmd_p = 99;
+        }
+        __io_putchar(c);
+        return NULL;
+    }
+    //ho trovato il fine riga
+
+    shell_cmd[cmd_p] ='\0';
+    cmd_p = 0;
+    /* Process the command......*/
+    if( shell_cmd[0] == '\0' )
+    {
+    	printf("\r\n");
+    	printshell();
+    	//
+    	return NULL;
+    }
+    printf("\r\n");
+    strcpy(shell_cmd_history[history_pos_w], shell_cmd);
+    history_pos_r = history_pos_w;
+    history_pos_w++;
+    if(history_pos_w >9)
+        history_pos_w = 0;
+    return shell_cmd;
+}

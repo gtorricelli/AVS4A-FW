@@ -9,7 +9,6 @@
 #include "shell.h"
 #include "sensors_task.h"
 #include "bme_task.h"
-#include "pir_task.h"
 
 #define ENOERR           0
 #define MAX_OPTIONS      10             /**< Max number of options for a command */
@@ -42,22 +41,19 @@ static int32_t enwhiteled        (char *_opts[]);
 static int32_t term              (char *_opts[]);
 static int32_t battery           (char *_opts[]);
 static int32_t sensor            (char *_opts[]);
-static int32_t setMinPIRms       (char *_opts[]);
-static int32_t setMinPIRsg       (char *_opts[]);
+
 static shell_command_st commands[] =
 {
-	{"help","                 Print this list"      		, NULL, print_help},
-	{"i2c","                  i2c bus scan"         		, NULL, i2c_bus_scan, {NULL}},
-    {"mpp","                  mpp (1/0)"   		            , NULL, mpp, {NULL}},
-	{"en20v","                20V (1/0)"   		            , NULL, en20v, {NULL}},
-	{"en12v","                12V (1/0)"   		            , NULL, en12v, {NULL}},
-	{"enIR","                 IR (1/0)"    		            , NULL, enirled, {NULL}},
-	{"enwhite","              White (1/0)" 		            , NULL, enwhiteled, {NULL}},
-    {"term","                 termination (1/0)"            , NULL, term, {NULL}},
-    {"batt","                 battery data"                 , NULL, battery, {NULL}},
-    {"sens","                 sensor data"                  , NULL, sensor, {NULL}},
-	{"debms","                IN PIR debounce"              , NULL, setMinPIRms, {NULL}},
-	{"tim4PIR","              IN PIR time before signal"    , NULL, setMinPIRsg, {NULL}},
+	{"help","         Print this list"      		, NULL, print_help},
+	{"i2c","          i2c bus scan"         		, NULL, i2c_bus_scan, {NULL}},
+    {"mpp","          mpp (1/0)"   		            , NULL, mpp, {NULL}},
+	{"en20v","        20V (1/0)"   		            , NULL, en20v, {NULL}},
+	{"en12v","        12V (1/0)"   		            , NULL, en12v, {NULL}},
+	{"enIR","         IR (1/0)"    		            , NULL, enirled, {NULL}},
+	{"enwhite","      White (1/0)" 		            , NULL, enwhiteled, {NULL}},
+    {"term","         termination (1/0)"            , NULL, term, {NULL}},
+    {"batt","         battery data"                 , NULL, battery, {NULL}},
+    {"sens","         sensor data"                  , NULL, sensor, {NULL}},
 };                                                                  /**< Commands array */
 
 /* API functions */
@@ -445,33 +441,5 @@ static int32_t sensor            (char *_opts[])
 	fValue    = get_bme_humidity();
 	printf("BME humidity %ld\r\n",(int32_t)(fValue*10));
 	return 0;
-}
-
-static int32_t setMinPIRms        (char *_opts[])
-{
-	int v;
-    if (_opts[0] == NULL)
-    {
-    	v=getDebounce_ms();
-    	printf("Current debounce time=%dms\r\n",v);
-    	return 0;
-    }
-    v = atoi(_opts[0]);
-    setDebounce_ms(v);
-    return 0;
-}
-
-static int32_t setMinPIRsg        (char *_opts[])
-{
-	int v;
-    if (_opts[0] == NULL)
-    {
-    	v=getMin_PIR_ms();
-    	printf("Current PIR time to signal =%dms\r\n",v);
-    	return 0;
-    }
-    v = atoi(_opts[0]);
-    setMin_PIR_ms(v);
-    return 0;
 }
 

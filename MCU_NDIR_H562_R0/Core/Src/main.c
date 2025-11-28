@@ -33,8 +33,7 @@
 #include "kedOS.h"
 #include "blink_task.h"
 #include "shell_task.h"
-#include "bme_task.h"
-#include "pir_task.h"
+#include <bme_task.h>
 
 #include "ice40_programmer.h"
 #include "sensors_task.h"
@@ -131,13 +130,11 @@ int main(void)
   while (1)
   {
 //	  choice=0;
-//	  num=readPIRS();
-//	  printf("readpirs=%d\n\r",num);
 //      printf("%d:Ciao!\n\r",num++);
 //	  scanf("%c",&choice);
 //      if(choice!=0)
 //    	  printf("choice=%d\n\r",choice);
- //     HAL_Delay(1000);
+//      HAL_Delay(5000);
  //		HAL_GPIO_TogglePin(EN_12V_GPIO_Port, EN_12V_Pin);
 //		HAL_GPIO_WritePin(EN_12V_GPIO_Port, EN_12V_Pin, GPIO_PIN_RESET);
 //		HAL_GPIO_WritePin(EN_IR_GPIO_Port, EN_IR_Pin, GPIO_PIN_SET);
@@ -239,7 +236,6 @@ static void OS_Task_Init()
 	bme_task_init();
 	shell_task_init();
 	sensors_task_init();
-	pir_task_init();
 }
 /* USER CODE END 4 */
 
