@@ -50,8 +50,11 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, EXP12_Pin|EXP10_Pin|EXP11_Pin|EN_20V_Pin
-                          |EN_12V_Pin|EN_IR_Pin|EN_WHITE_Pin|TERM_EN_Pin
-                          |MPP_EN_Pin|EXP8_Pin|EXP9_Pin, GPIO_PIN_RESET);
+                          |EN_IR_Pin|EN_WHITE_Pin|TERM_EN_Pin|MPP_EN_Pin
+                          |EXP8_Pin|EXP9_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(EN_12V_GPIO_Port, EN_12V_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, CPLD_NSS2_Pin|USOUND_SYNC1_Pin|USOUND_SYNC2_Pin|LED1_Pin, GPIO_PIN_RESET);
@@ -107,13 +110,13 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pins : PCPin PCPin PCPin */
   GPIO_InitStruct.Pin = PIR4_Pin|PIR3_Pin|PIR2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = PIR1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(PIR1_GPIO_Port, &GPIO_InitStruct);
 
 }

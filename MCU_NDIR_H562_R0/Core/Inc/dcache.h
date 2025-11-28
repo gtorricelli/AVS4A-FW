@@ -1,13 +1,13 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    usb.h
+  * @file    dcache.h
   * @brief   This file contains all the function prototypes for
-  *          the usb.c file
+  *          the dcache.c file
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -18,8 +18,8 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __USB_H__
-#define __USB_H__
+#ifndef __DCACHE_H__
+#define __DCACHE_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,30 +29,24 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
-#define USB_CDC_NUMBER  3
-enum CDC_NAME{
-	CDC_SERIAL0,//cpu
-	CDC_SERIAL1,//usb shell
-	CDC_SERIAL2,//seconda shell
-};
 
 /* USER CODE END Includes */
 
-extern PCD_HandleTypeDef hpcd_USB_DRD_FS;
+extern DCACHE_HandleTypeDef hdcache1;
 
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
-void MX_USB_PCD_Init(void);
+void MX_DCACHE1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-uint8_t MX_USB_Device_Connected();
+
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __USB_H__ */
+#endif /* __DCACHE_H__ */
 

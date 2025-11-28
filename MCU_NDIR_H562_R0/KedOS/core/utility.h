@@ -17,6 +17,18 @@
 /***************************************
  * API
  **************************************/
+typedef enum
+{
+	NOERROR,
+	BOOTLINUXERROR,
+	LINUXOFFERROR,
+	HAILOFLAG,
+	RTCTIMEGETERROR,
+	RTCTIMESETERROR,
+	RTCDATESETERROR,
+	RTCTIMELINUXNODATE,//nonostante che ci sia la rete, rtu non ha ricevuto da linux un ora coerente
+}Terrorcodes;
+
 void memset8(uint8_t*, uint8_t, uint32_t);
 void memcpy32 (uint32_t* src, uint32_t* dst, uint32_t length );
 void str_copy(char*,char*,uint8_t);
@@ -30,5 +42,5 @@ void sint8_t_to_string(int8_t n, int8_t* str);
 void sword_to_string(int16_t n, int8_t* str);
 uint8_t uint32_t_to_string(uint32_t n, int8_t* str, uint8_t base);
 uint8_t trim_zero(int8_t *cpy, const int8_t* src);
-
+void segnala_errore(Terrorcodes lasterror);
 #endif	/* UTILITY_H*/

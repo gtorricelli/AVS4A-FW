@@ -27,7 +27,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "memorymap.h"
 #include <stdio.h>
 #include "bsp.h"
 #include "kedOS.h"

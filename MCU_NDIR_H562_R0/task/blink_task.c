@@ -1,6 +1,6 @@
 #include "KedOS.h"
 #include "main.h"
-
+#include "iwdg.h"
 /*private function fo Protocol */
 static void BlinkTask();
 
@@ -30,19 +30,19 @@ static void BlinkTask()
 	bLedCnt++;
 	if(bLedCnt >= 99){
 		bLedCnt = 0;
+		HAL_IWDG_Refresh(&hiwdg);
 	}
 
-	u8Color = bLedValue * 128;
-	if(bLedValue == 0)
-	{
-		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin,bLedValue);
-		HAL_I2C_Mem_Write(&hi2c2, 0x38<<1, 0x01, I2C_MEMADD_SIZE_8BIT, &u8Color, 1, HAL_MAX_DELAY);
-	}
-	else
-	{
-		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin,bLedValue);
-		HAL_I2C_Mem_Write(&hi2c2, 0x38<<1, 0x01, I2C_MEMADD_SIZE_8BIT, &u8Color, 1, HAL_MAX_DELAY);
-	}
+//	u8Color = bLedValue * 128;
+//	if(bLedValue == 0)
+//	{
+//		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin,bLedValue);
+//
+//	}
+//	else
+//	{
+//		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin,bLedValue);
+//	}
 
 }
 

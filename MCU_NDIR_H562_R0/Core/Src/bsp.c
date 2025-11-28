@@ -13,19 +13,25 @@
 static uint32_t u32_DelayPrescaler;
 //#define USB_SHELL 1
 #define USB_PORT CDC_SERIAL1
-#undef USB_SHELL
-//int _write(int file, char *ptr, int len) {
-//	uint8_t Ret=USBD_BUSY;
-//	HAL_StatusTypeDef status = HAL_UART_Transmit(&huart3, (uint8_t*)&ptr, len,0xffff);
-//
-////	Ret=CDC_Transmit_Buffered((uint8_t*) ptr, len,USB_PORT);
-////    while(Ret==USBD_BUSY)
-////    {
-////    	Ret=CDC_Transmit_Buffered((uint8_t*) ptr, len, USB_PORT);
-////    	HAL_Delay(1);
-////    }
-//    return len;
-//}
+//#undef USB_SHELL
+#define USB_SHELL
+
+
+int _write(int file, char *ptr, int len) {
+	uint8_t Ret=USBD_BUSY;
+#ifdef USB_SHELL
+	Ret=CDC_Transmit_Buffered((uint8_t*) ptr, len,USB_PORT);
+    while(Ret==USBD_BUSY)
+    {
+    	Ret=CDC_Transmit_Buffered((uint8_t*) ptr, len, USB_PORT);
+    	HAL_Delay(1);
+    }
+#else
+	Ret = HAL_UART_Transmit(&huart3, (uint8_t*)&ptr, len,0xffff);
+#endif
+
+    return len;
+}
 
 int __io_putchar(int ch)
 {

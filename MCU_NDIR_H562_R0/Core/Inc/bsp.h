@@ -40,6 +40,9 @@ int SPRINTF( uint16_t maxlen,char *apBuf, const char *apFmt, ... );
 #define PRINTF(...)			PRINTF(__VA_ARGS__)
 #define SPRINTF(...)		SPRINTF(__VA_ARGS__)
 
-
+#define BOOT_ADDRESS               (uint32_t)0x08000000
+#define BOOTLOADER_KEY             (uint32_t)0x2009F000
+#define MAGIC_KEY                  0xAAAADAD0
+#define SERIAL_NUMBER_BASEADDR     0x1FFF7590UL
 
 #endif /* INC_BSP_H_ */

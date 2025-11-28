@@ -24,7 +24,7 @@ int16_t  getBatteryCurrentMa();/*KED*/
 int16_t  getBatteryAverageCurrentMa();/*KED*/
 uint8_t  getBatteryMaxError();
 uint8_t  getBatteryRelativeStateOfCharge();/*KED*/
-uint8_t  getBatteryAbsoluteStateOfCharge();/*KED*/
+//uint8_t  getBatteryAbsoluteStateOfCharge();/*KED*/
 uint16_t getBatteryRemainingCapacityMah();
 uint16_t getBatteryFullChargeCapacityMah();
 uint16_t getBatteryRunTimeToEmptyMin();

@@ -10,6 +10,7 @@
 #include "sensors_task.h"
 #include "bme_task.h"
 #include "pir_task.h"
+#include "time.h"
 
 #define ENOERR           0
 #define MAX_OPTIONS      10             /**< Max number of options for a command */
@@ -42,8 +43,12 @@ static int32_t enwhiteled        (char *_opts[]);
 static int32_t term              (char *_opts[]);
 static int32_t battery           (char *_opts[]);
 static int32_t sensor            (char *_opts[]);
+static int32_t pir               (char *_opts[]);
 static int32_t setMinPIRms       (char *_opts[]);
 static int32_t setMinPIRsg       (char *_opts[]);
+static int32_t fwupgrade         (char *_opts[]);
+static int32_t fwVersione        (char *_opts[]);
+static int32_t system_date       (char *_opts[]);
 static shell_command_st commands[] =
 {
 	{"help","                 Print this list"      		, NULL, print_help},
@@ -57,7 +62,11 @@ static shell_command_st commands[] =
     {"batt","                 battery data"                 , NULL, battery, {NULL}},
     {"sens","                 sensor data"                  , NULL, sensor, {NULL}},
 	{"debms","                IN PIR debounce"              , NULL, setMinPIRms, {NULL}},
+	{"pir","                  pir measure task"             , NULL, pir, {NULL}},
 	{"tim4PIR","              IN PIR time before signal"    , NULL, setMinPIRsg, {NULL}},
+    {"date","                 Set/Get rtc time"             , NULL, system_date, {NULL}},
+	{"fw","                   FIRMWARE UPGRADE"             , NULL, fwupgrade, {NULL}},
+	{"ver","                  FIRMWARE VERSION"             , NULL, fwVersione, {NULL}},
 };                                                                  /**< Commands array */
 
 /* API functions */
@@ -302,11 +311,11 @@ static int32_t en20v               (char *_opts[])
     	on = atoi(_opts[0]);
     	if(on>0)
     	{
-    		HAL_GPIO_WritePin(EN_20V_GPIO_Port, EN_20V_Pin, GPIO_PIN_RESET);
+    		HAL_GPIO_WritePin(EN_20V_GPIO_Port, EN_20V_Pin, GPIO_PIN_SET);
     	}
     	else
     	{
-    		HAL_GPIO_WritePin(EN_20V_GPIO_Port, EN_20V_Pin, GPIO_PIN_SET);
+    		HAL_GPIO_WritePin(EN_20V_GPIO_Port, EN_20V_Pin, GPIO_PIN_RESET);
     	}
     }
 	return 0;
@@ -322,11 +331,11 @@ static int32_t en12v               (char *_opts[])
     	on = atoi(_opts[0]);
     	if(on>0)
     	{
-    		HAL_GPIO_WritePin(EN_12V_GPIO_Port, EN_12V_Pin, GPIO_PIN_RESET);
+    		HAL_GPIO_WritePin(EN_12V_GPIO_Port, EN_12V_Pin, GPIO_PIN_SET);
     	}
     	else
     	{
-    		HAL_GPIO_WritePin(EN_12V_GPIO_Port, EN_12V_Pin, GPIO_PIN_SET);
+    		HAL_GPIO_WritePin(EN_12V_GPIO_Port, EN_12V_Pin, GPIO_PIN_RESET);
     	}
     }
 	return 0;
@@ -341,11 +350,11 @@ static int32_t enirled               (char *_opts[])
     	on = atoi(_opts[0]);
     	if(on>0)
     	{
-    		HAL_GPIO_WritePin(EN_IR_GPIO_Port, EN_IR_Pin, GPIO_PIN_RESET);
+    		HAL_GPIO_WritePin(EN_IR_GPIO_Port, EN_IR_Pin, GPIO_PIN_SET);
     	}
     	else
     	{
-    		HAL_GPIO_WritePin(EN_IR_GPIO_Port, EN_IR_Pin, GPIO_PIN_SET);
+    		HAL_GPIO_WritePin(EN_IR_GPIO_Port, EN_IR_Pin, GPIO_PIN_RESET);
     	}
     }
 	return 0;
@@ -361,11 +370,11 @@ static int32_t enwhiteled               (char *_opts[])
     	on = atoi(_opts[0]);
     	if(on>0)
     	{
-    		HAL_GPIO_WritePin(EN_WHITE_GPIO_Port, EN_WHITE_Pin, GPIO_PIN_RESET);
+    		HAL_GPIO_WritePin(EN_WHITE_GPIO_Port, EN_WHITE_Pin, GPIO_PIN_SET);
     	}
     	else
     	{
-    		HAL_GPIO_WritePin(EN_WHITE_GPIO_Port, EN_WHITE_Pin, GPIO_PIN_SET);
+    		HAL_GPIO_WritePin(EN_WHITE_GPIO_Port, EN_WHITE_Pin, GPIO_PIN_RESET);
     	}
     }
 	return 0;
@@ -474,4 +483,120 @@ static int32_t setMinPIRsg        (char *_opts[])
     setMin_PIR_ms(v);
     return 0;
 }
+
+static int32_t fwupgrade         (char *_opts[])
+{
+	uint32_t *bootloader_flag = (uint32_t*)BOOTLOADER_KEY;
+	*bootloader_flag=MAGIC_KEY;
+	NVIC_SystemReset();
+    return 0;
+}
+
+static int32_t fwVersione         (char *_opts[])
+{
+	printf("sw Versione 5\r\n");
+    return 0;
+}
+static uint32_t shellFuncTime = 0;
+
+void * pir_measure()
+{
+	static uint32_t value = 0;
+	int res;
+	char ChValue;
+	if(time_elapsed_ms(shellFuncTime, 100)==0) return 0;
+	shellFuncTime = get_clock_ms();
+    printf(CLS CURPOS(0,0) ATTR_FRED "\r\PIR MEASURE \r\n" );
+    printf(ATTR_FGREEN);
+
+    printf("P[0]:%d P[1]:%d P[2]:%d P[3]:%d \r\n",
+    		getPirvalue(0),
+    		getPirvalue(1),
+    		getPirvalue(2),
+    		getPirvalue(3)
+			);
+	return 0;
+}
+static int32_t pir               (char *_opts[])
+{
+	shellFuncTime = get_clock_ms();
+	launch_shell_process(pir_measure);
+	return 0;
+}
+
+static int32_t system_date       (char *_opts[])
+{
+	struct tm time;
+	char *token;
+	RTC_TimeTypeDef sTime = {0};
+	RTC_DateTypeDef sDate = {0};
+
+	//    int    tm_sec   Seconds [0,60].
+	//    int    tm_min   Minutes [0,59].
+	//    int    tm_hour  Hour [0,23].
+	//    int    tm_mday  Day of month [1,31].
+	//    int    tm_mon   Month of year [0,11].
+	//    int    tm_year  Years since 1900.
+	//    int    tm_wday  Day of week [0,6] (Sunday =0).
+	//    int    tm_yday  Day of year [0,365].
+	//    int    tm_isdst Daylight Savings flag.
+
+	if (_opts[0] == NULL)
+	{
+		date_read(&time);
+		printf("Date:%04d-%02d-%2d %02d:%02d:%02d\r\n",time.tm_year+1900,time.tm_mon+1,time.tm_mday,time.tm_hour,time.tm_min,time.tm_sec);
+		return 0;
+	}
+	if (_opts[1] != NULL)
+	{
+
+		token = strtok(_opts[0], "-");
+		if(token==NULL) return -1;
+		time.tm_year = atoi(token)-1900;
+//		time.tm_year = atoi(token);
+
+		token = strtok(NULL, "-");
+		if(token==NULL) return -1;
+		time.tm_mon  = atoi(token)-1;
+
+		token = strtok(NULL, "-");
+		if(token==NULL) return -1;
+		time.tm_mday = atoi(token);
+
+		token = strtok(_opts[1], ":");
+		if(token==NULL) return -1;
+		time.tm_hour = atoi(token);
+
+		token = strtok(NULL, ":");
+		if(token==NULL) return -1;
+		time.tm_min  = atoi(token);
+
+		token = strtok(NULL, ":");
+		if(token==NULL) return -1;
+		time.tm_sec = atoi(token);
+
+//		time.tm_wday=rtc_dow(time.tm_year,time.tm_mon+1,time.tm_mday);
+		time.tm_wday=rtc_dow(time.tm_year+1900,time.tm_mon+1,time.tm_mday);
+		//	pcf8563_write(&time);
+		sDate.Date  = time.tm_mday;
+		sDate.Month = time.tm_mon;
+		sDate.Year  = time.tm_year;  // Last two digits (00–99)
+		//    sDate.WeekDay = time.tm_mday; // WeekDay required but ignored; can be computed if needed
+
+		sTime.Hours   = time.tm_hour;
+		sTime.Minutes = time.tm_min;
+		sTime.Seconds = time.tm_sec;
+
+		//	setRtcAlarmsNumber(getRtcAlarmsNumber(),1);
+		setCurrRTC(&sTime,&sDate);
+	}
+	else
+	{
+		printf("Date Format Error!\r\n");
+	}
+
+
+	return 0;
+}
+
 

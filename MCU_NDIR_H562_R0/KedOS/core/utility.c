@@ -27,6 +27,7 @@
 /***************************************
  * Private instances
  **************************************/
+static Terrorcodes l_lasterror;
 
 /***************************************
  * Public functions definitions
@@ -385,7 +386,10 @@ void str_copy(char* src,char* cpy, uint8_t len_max)
 
 }
 
-
+void segnala_errore(Terrorcodes lasterror)
+{
+	l_lasterror=lasterror;
+}
 /***************************************
  * Private functions definitions
  **************************************/

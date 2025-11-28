@@ -52,7 +52,8 @@ void MX_USB_PCD_Init(void)
 {
 
   /* USER CODE BEGIN USB_Init 0 */
-  int i;
+  int i = 0;
+
   HAL_PWREx_EnableVddUSB();
   hpcd_USB_DRD_FS.pData = &hUsbDeviceFS;
   /* USER CODE END USB_Init 0 */
