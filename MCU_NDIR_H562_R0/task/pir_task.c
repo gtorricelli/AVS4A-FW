@@ -45,103 +45,6 @@ static uint32_t    min_PIR_ms=2000;//2 sec.
 
 static uint32_t debounce_ms = 20; // 20 ms debounce window
 
-//
-//
-//uint8_t startwatchPIR(TPirnum pirnum)
-//{
-//  if(pirnum<PIR1||pirnum>PIR4)
-//	  return 0;
-//  switch(pirnum)
-//  {
-//  case PIR1:
-//	  pir1_ms_time=0;
-//	  pir1_time_counting=1;
-//	  break;
-//  case PIR2:
-//	  pir2_ms_time=0;
-//	  pir2_time_counting=1;
-//	  break;
-//  case PIR3:
-//	  pir3_ms_time=0;
-//	  pir3_time_counting=1;
-//	  break;
-//  case PIR4:
-//	  pir4_ms_time=0;
-//	  pir4_time_counting=1;
-//	  break;
-//  default:
-//	  return 0;
-//  }
-//  return 1;
-//}
-
-//uint8_t stopwatchPIR(TPirnum pirnum)
-//{
-//  if(pirnum<PIR1||pirnum>PIR4)
-//	  return 0;
-//  switch(pirnum)
-//  {
-//  case PIR1:
-//	  pir1_time_counting=0;
-//	  break;
-//  case PIR2:
-//	  pir2_time_counting=0;
-//	  break;
-//  case PIR3:
-//	  pir3_time_counting=0;
-//	  break;
-//  case PIR4:
-//	  pir4_time_counting=0;
-//	  break;
-//  default:
-//	  return 0;
-//  }
-//  return 1;
-//}
-
-void pir_task_init()
-{
-	gu8pirSync  = 0;
-	//time critical function
-	stPirsState    = INIT_PIRS;
-	add_mainloop_funct(PirMainTask, "pir-taSK\0", 1, 0);
-	add_cyclical_funct(PirRtTask, 1, "pir_sync\0",CRITICAL_TASK);
-}
-
-static void PirRtTask()
-{
-	gu8pirSync = 1;
-}
-
-void setMin_PIR_ms(uint32_t v)
-{
-	min_PIR_ms=v;
-}
-
-uint32_t getMin_PIR_ms()
-{
-	return min_PIR_ms;
-}
-
-uint8_t getPir1Counting()
-{
-	return pir1_time_counting;
-}
-
-uint8_t getPir2Counting()
-{
-	return pir2_time_counting;
-}
-
-uint8_t getPir3Counting()
-{
-	return pir3_time_counting;
-}
-
-uint8_t getPir4Counting()
-{
-	return pir4_time_counting;
-}
 #define PIR1MASK (1<<0)
 #define PIR2MASK (1<<1)
 #define PIR3MASK (1<<2)
@@ -173,167 +76,275 @@ uint8_t readPIRS()
 	return (pirs&PIRSMASK);
 }
 
+
+void pir_task_init()
+{
+	gu8pirSync  = 0;
+	//time critical function
+	stPirsState    = INIT_PIRS;
+	add_mainloop_funct(PirMainTask, "pir-taSK\0", 1, 0);
+	add_cyclical_funct(PirRtTask, 1, "pir_sync\0",CRITICAL_TASK);
+}
+
+#define COUNT_PIR_TIMEOUT 3000
+#define DENOISE_STEP      5
+static uint8_t  gu8PirValue[4];
+static uint8_t  gu8PirValueFiltered[4];
+static uint8_t  gu8PirValueFilteredD[4];
+static uint8_t  gu8PirValueEvent[4];
+
+static uint32_t gu8PirCounter[4];
+static uint8_t  gu8PirFilterCount[4];
+
+
+static void PirRtTask()
+{
+	gu8pirSync = 1;
+
+	gu8PirValue[0] = HAL_GPIO_ReadPin(PIR1_GPIO_Port, PIR1_Pin);
+	gu8PirValue[1] = HAL_GPIO_ReadPin(PIR2_GPIO_Port, PIR2_Pin);
+	gu8PirValue[2] = HAL_GPIO_ReadPin(PIR3_GPIO_Port, PIR3_Pin);
+	gu8PirValue[3] = HAL_GPIO_ReadPin(PIR4_GPIO_Port, PIR4_Pin);
+
+	if(gu8PirCounter[0]>0)
+	{
+		gu8PirCounter[0]--;
+	}
+	if(gu8PirCounter[1]>0)
+	{
+		gu8PirCounter[1]--;
+	}
+	if(gu8PirCounter[2]>0)
+	{
+		gu8PirCounter[2]--;
+	}
+	if(gu8PirCounter[3]>0)
+	{
+		gu8PirCounter[3]--;
+	}
+
+}
+
+static void PirMainTask()
+{
+	int i;
+	if(gu8pirSync==0) return;
+
+	gu8pirSync = 0;
+
+
+	for(i=0;i<4;i++)
+	{
+		if(gu8PirValue[i] == 0)
+		{
+			if(gu8PirFilterCount[i]>0)
+				gu8PirFilterCount[i]--;
+		}
+		else
+		{
+			if(gu8PirFilterCount[i]<DENOISE_STEP)
+				gu8PirFilterCount[i]++;
+		}
+		if(gu8PirFilterCount[i] == 0)
+		{
+			gu8PirValueFiltered[i] = 1;
+		}
+		if(gu8PirFilterCount[i] == DENOISE_STEP)
+		{
+			gu8PirValueFiltered[i] = 0;
+		}
+		if((gu8PirValueFilteredD[i] == 0) && (gu8PirValueFiltered[i] == 1))
+		{
+			gu8PirValueEvent[i] = 1;
+			gu8PirCounter[i]    = COUNT_PIR_TIMEOUT;
+		}
+		gu8PirValueFilteredD[i] = gu8PirValueFiltered[i];
+	}
+
+
+}
+
+void setMin_PIR_ms(uint32_t v)
+{
+	min_PIR_ms=v;
+}
+
+uint32_t getMin_PIR_ms()
+{
+	return min_PIR_ms;
+}
+
+uint8_t getPir1Counting()
+{
+	return pir1_time_counting;
+}
+
+uint8_t getPir2Counting()
+{
+	return pir2_time_counting;
+}
+
+uint8_t getPir3Counting()
+{
+	return pir3_time_counting;
+}
+
+uint8_t getPir4Counting()
+{
+	return pir4_time_counting;
+}
+
 void resetCounters()
 {
 	pir1_ms_time=pir2_ms_time=pir3_ms_time=pir4_ms_time=0;
 }
 
-static void PirMainTask()
-{
-	_PirStatus stPirsNextState;
-	uint8_t pirs;
-	static uint16_t step=0;
-	static uint8_t OutEn=0;
-	if(gu8pirSync == 0) return;
-	gu8pirSync = 0;
-	if(stPirsState != stPirsStateOld)
-	{
-		stPirsStateOld = stPirsState;
-	}
-	stPirsNextState=stPirsStateOld;
-	switch(stPirsState)
-	{
-	case INIT_PIRS:
-		pir1_debouncing=pir2_debouncing=pir3_debouncing=pir4_debouncing=0;
-		pir1_time_counting=pir2_time_counting=pir3_time_counting=pir4_time_counting=0;
-		stPirsNextState=CHECKINPUTS;
-		stPirsState = stPirsNextState;
-		OutEn=0;
-		break;
-	case CHECKINPUTS:
-		pirs=readPIRS();
-		if(pirs&PIR1MASK)
-		{
-			pir1_debouncing=1;
-			stPirsNextState=CHECKDEBOUNCE;
-		}
-		else if(pirs&PIR2MASK)
-		{
-			pir2_debouncing=1;
-			stPirsNextState=CHECKDEBOUNCE;
-		}
-		else if(pirs&PIR3MASK)
-		{
-			pir3_debouncing=1;
-			stPirsNextState=CHECKDEBOUNCE;
-		}
-		else if(pirs&PIR4MASK)
-		{
-			pir4_debouncing=1;
-			stPirsNextState=CHECKDEBOUNCE;
-		}
-		if(stPirsNextState!=stPirsStateOld) resetCounters();//inizio debounce
-		stPirsState = stPirsNextState;
-		break;
-	case CHECKDEBOUNCE:
-		pirs=readPIRS();
-		if     (pir1_debouncing&&(pirs&PIR1MASK))
-		{
-			if(pir1_ms_time>debounce_ms)
-			{
-				++step;
-				printf("\n\rPIR1->set Usound %d\n\r",step);
-				pir1_time_counting=1;
-				stPirsNextState = CHECKCOUNT;
-				OutEn=1;
-			}
-		}
-
-		else if(pir2_debouncing&&(pirs&PIR2MASK))
-		{
-			if(pir2_ms_time>debounce_ms)
-			{
-				++step;
-				printf("\n\rPIR2->set Usound %d\n\r",step);
-				pir2_time_counting=1;
-				stPirsNextState = CHECKCOUNT;
-				OutEn=1;
-			}
-		}
-		else if(pir3_debouncing&&(pirs&PIR3MASK))
-		{
-			if(pir3_ms_time>debounce_ms)
-			{
-				++step;
-				printf("\n\rPIR3->set Usound %d\n\r",step);
-				pir3_time_counting=1;
-				stPirsNextState = CHECKCOUNT;
-				OutEn=1;
-			}
-		}
-		else if(pir4_debouncing&&(pirs&PIR4MASK))
-		{
-			if(pir4_ms_time>debounce_ms)
-			{
-				++step;
-				printf("\n\rPIR4->set Usound %d\n\r",step);
-				pir4_time_counting=1;
-				stPirsNextState = CHECKCOUNT;
-				OutEn=1;
-			}
-		}
-		else
-		{
-			stPirsNextState = INIT_PIRS;
-		}
-		stPirsState = stPirsNextState;
-		break;
-	case CHECKCOUNT:
-
-		if     (pir1_time_counting)
-		{
-			if(pir1_ms_time>min_PIR_ms+debounce_ms)
-			{
-				if(OutEn)
-					printf("PIR1->reset Usound %d\n\r",step);
-				//
-				stPirsNextState = INIT_PIRS;
-			}
-		}
-		else if(pir2_time_counting)
-		{
-			if(pir2_ms_time>min_PIR_ms+debounce_ms)
-			{
-				if(OutEn)
-					printf("PIR2->reset Usound %d\n\r",step);
-				//
-				stPirsNextState = INIT_PIRS;
-			}
-		}
-		else if(pir3_time_counting)
-		{
-			if(pir3_ms_time>min_PIR_ms+debounce_ms)
-			{
-				if(OutEn)
-					printf("PIR3->reset Usound %d\n\r",step);
-				//
-				stPirsNextState = INIT_PIRS;
-			}
-		}
-		else if(pir4_time_counting)
-		{
-			if(pir4_ms_time>min_PIR_ms+debounce_ms)
-			{
-				if(OutEn)
-					printf("PIR4->reset Usound %d\n\r",step);
-				//
-				stPirsNextState = INIT_PIRS;
-			}
-		}
-
-
-		stPirsState = stPirsNextState;
-		break;
-	case PIRS_LAST:
-	default:
-		stPirsState = INIT_PIRS;
-		break;
-	}
-	pir1_ms_time++;
-	pir2_ms_time++;
-	pir3_ms_time++;
-	pir4_ms_time++;
-}
+//static void PirMainTask()
+//{
+//	_PirStatus stPirsNextState;
+//	uint8_t pirs;
+//	static uint8_t OutEn=0;
+//	if(gu8pirSync == 0) return;
+//	gu8pirSync = 0;
+//	if(stPirsState != stPirsStateOld)
+//	{
+//		stPirsStateOld = stPirsState;
+//	}
+//	stPirsNextState=stPirsStateOld;
+//	switch(stPirsState)
+//	{
+//	case INIT_PIRS:
+//		pir1_debouncing=pir2_debouncing=pir3_debouncing=pir4_debouncing=0;
+//		pir1_time_counting=pir2_time_counting=pir3_time_counting=pir4_time_counting=0;
+//		stPirsNextState=CHECKINPUTS;
+//		stPirsState = stPirsNextState;
+//		printf("Reset Usound\n\r");
+//		OutEn=0;
+//		break;
+//	case CHECKINPUTS:
+//		pirs=readPIRS();
+//		if(pirs&PIR1MASK)
+//		{
+//			pir1_debouncing=1;
+//			stPirsNextState=CHECKDEBOUNCE;
+//		}
+//		else if(pirs&PIR2MASK)
+//		{
+//			pir2_debouncing=1;
+//			stPirsNextState=CHECKDEBOUNCE;
+//		}
+//		else if(pirs&PIR3MASK)
+//		{
+//			pir3_debouncing=1;
+//			stPirsNextState=CHECKDEBOUNCE;
+//		}
+//		else if(pirs&PIR4MASK)
+//		{
+//			pir4_debouncing=1;
+//			stPirsNextState=CHECKDEBOUNCE;
+//		}
+//		if(stPirsNextState!=stPirsStateOld) resetCounters();//inizio debounce
+//		stPirsState = stPirsNextState;
+//		break;
+//	case CHECKDEBOUNCE:
+//		pirs=readPIRS();
+//		if     (pir1_debouncing&&(pirs&PIR1MASK))
+//		{
+//			if(pir1_ms_time>debounce_ms)
+//			{
+//				pir1_time_counting=1;
+//				stPirsNextState = CHECKCOUNT;
+//			}
+//		}
+//
+//		else if(pir2_debouncing&&(pirs&PIR2MASK))
+//		{
+//			if(pir2_ms_time>debounce_ms)
+//			{
+//				pir2_time_counting=1;
+//				stPirsNextState = CHECKCOUNT;
+//			}
+//		}
+//		else if(pir3_debouncing&&(pirs&PIR3MASK))
+//		{
+//			if(pir3_ms_time>debounce_ms)
+//			{
+//				pir3_time_counting=1;
+//				stPirsNextState = CHECKCOUNT;
+//			}
+//		}
+//		else if(pir4_debouncing&&(pirs&PIR4MASK))
+//		{
+//			if(pir4_ms_time>debounce_ms)
+//			{
+//				pir4_time_counting=1;
+//				stPirsNextState = CHECKCOUNT;
+//			}
+//		}
+//		else
+//		{
+//			stPirsNextState = INIT_PIRS;
+//		}
+//		stPirsState = stPirsNextState;
+//		break;
+//	case CHECKCOUNT:
+//		pirs=readPIRS();
+//		if     (pir1_time_counting&&(pirs&PIR1MASK))
+//		{
+//			if(pir1_ms_time>min_PIR_ms+debounce_ms)
+//			{
+//				if(!OutEn)
+//					printf("PIR1->set Usound\n\r");
+//				//attivazione uscita
+//				OutEn=1;
+//			}
+//		}
+//		else if(pir2_time_counting&&(pirs&PIR2MASK))
+//		{
+//			if(pir2_ms_time>min_PIR_ms+debounce_ms)
+//			{
+//				if(!OutEn)
+//					printf("PIR2->set Usound\n\r");
+//				//attivazione uscita
+//				OutEn=1;
+//			}
+//		}
+//		else if(pir3_time_counting&&(pirs&PIR3MASK))
+//		{
+//			if(pir3_ms_time>min_PIR_ms+debounce_ms)
+//			{
+//				if(!OutEn)
+//					printf("PIR3->set Usound\n\r");
+//				//attivazione uscita
+//				OutEn=1;
+//			}
+//		}
+//		else if(pir4_time_counting&&(pirs&PIR4MASK))
+//		{
+//			if(pir4_ms_time>min_PIR_ms+debounce_ms)
+//			{
+//				if(!OutEn)
+//					printf("PIR4->set Usound\n\r");
+//				//attivazione uscita
+//				OutEn=1;
+//			}
+//		}
+//		else
+//		{
+//			stPirsNextState = INIT_PIRS;
+//		}
+//		stPirsState = stPirsNextState;
+//		break;
+//	case PIRS_LAST:
+//	default:
+//		stPirsState = INIT_PIRS;
+//		break;
+//	}
+//	pir1_ms_time++;
+//	pir2_ms_time++;
+//	pir3_ms_time++;
+//	pir4_ms_time++;
+//}
 
 uint32_t get_pir1_time_ms()
 {

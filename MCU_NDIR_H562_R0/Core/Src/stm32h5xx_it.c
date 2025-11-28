@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "kedOS.h"
+#include "pir_task.h"
 
 /* USER CODE END Includes */
 
@@ -43,7 +44,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -61,7 +61,6 @@ extern SPI_HandleTypeDef hspi1;
 extern UART_HandleTypeDef huart1;
 extern PCD_HandleTypeDef hpcd_USB_DRD_FS;
 /* USER CODE BEGIN EV */
-
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -201,19 +200,6 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32h5xx.s).                    */
 /******************************************************************************/
-
-/**
-  * @brief This function handles EXTI Line2 interrupt.
-  */
-void EXTI2_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI2_IRQn 0 */
-
-  /* USER CODE END EXTI2_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(PIR1_Pin);
-  /* USER CODE BEGIN EXTI2_IRQn 1 */
-  /* USER CODE END EXTI2_IRQn 1 */
-}
 
 /**
   * @brief This function handles SPI1 global interrupt.

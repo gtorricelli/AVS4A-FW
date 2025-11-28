@@ -111,7 +111,6 @@ void Error_Handler(void);
 #define PIR2_GPIO_Port GPIOC
 #define PIR1_Pin GPIO_PIN_2
 #define PIR1_GPIO_Port GPIOD
-#define PIR1_EXTI_IRQn EXTI2_IRQn
 #define EXP3_Pin GPIO_PIN_3
 #define EXP3_GPIO_Port GPIOB
 #define EXP4_Pin GPIO_PIN_4
