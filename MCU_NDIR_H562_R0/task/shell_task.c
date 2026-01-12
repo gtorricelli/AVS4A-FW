@@ -544,7 +544,7 @@ static int32_t system_date       (char *_opts[])
 
 	if (_opts[0] == NULL)
 	{
-		unixtime =  rtc_unix_read();
+		unixtime =  rtc_unix_read_utc();
 		timeinfo = localtime(&unixtime); // converte in struct tm (ora locale)
 		printf("Date:%04d-%02d-%2d %02d:%02d:%02d\r\n",
 				timeinfo->tm_year+1900,

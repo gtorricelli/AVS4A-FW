@@ -1,3 +1,0 @@
-../Core/Src/parameters.c:7:6:setDefaultParameters	16	static
-../Core/Src/parameters.c:22:9:loadParametersFromEeprom	144	static
-../Core/Src/parameters.c:41:6:saveParametersToEeprom	16	static

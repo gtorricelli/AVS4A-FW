@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (13.3.rel1)
+# Toolchain: GNU Tools for STM32 (12.3.rel1)
 ################################################################################
 
 # Add inputs and outputs from these tool invocations to the build variables 
@@ -16,7 +16,7 @@ S_DEPS += \
 
 # Each subdirectory must supply rules for building sources it contributes
 Core/Startup/%.o: ../Core/Startup/%.s Core/Startup/subdir.mk
-	arm-none-eabi-gcc -mcpu=cortex-m33 -g3 -DDEBUG -c -I"C:/Users/torri/OneDrive/Documenti/Lavoro/Qinova/Progetti/Monitoraggio Animali - CNIT/Firmware/AVS4A-FW/MCU_NDIR_H562_R0/USB/Class/CDC/Inc" -I"C:/Users/torri/OneDrive/Documenti/Lavoro/Qinova/Progetti/Monitoraggio Animali - CNIT/Firmware/AVS4A-FW/MCU_NDIR_H562_R0/USB/Core/Inc" -x assembler-with-cpp -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -o "$@" "$<"
+	arm-none-eabi-gcc -mcpu=cortex-m33 -g3 -DDEBUG -c -I"C:/Lavoro/QINOVA/STM32WS/MCU_NDIR_H562_R0/USB/Class/CDC/Inc" -I"C:/Lavoro/QINOVA/STM32WS/MCU_NDIR_H562_R0/USB/Core/Inc" -x assembler-with-cpp -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -o "$@" "$<"
 
 clean: clean-Core-2f-Startup
 

@@ -1,2 +1,0 @@
-../Core/Src/crc.c:62:10:mbus_crc16	1
-../Core/Src/crc.c:67:10:usPacketCRC16	2

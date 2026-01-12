@@ -1,6 +1,0 @@
-../task/bme_task.c:44:7:get_bme_temp	4	static
-../task/bme_task.c:48:7:get_bme_humidity	4	static
-../task/bme_task.c:52:7:get_bme_pressure	4	static
-../task/bme_task.c:57:6:bme_task_init	8	static
-../task/bme_task.c:65:13:BmeRtTask	4	static
-../task/bme_task.c:69:13:BmeMainTask	16	static

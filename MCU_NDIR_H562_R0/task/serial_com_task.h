@@ -50,6 +50,8 @@ typedef enum {
 	CMD_RET_DATE      = 0x85,
 	CMD_SEND_SENSOR   = 0x06,
 	CMD_ACK_SENSOR    = 0x86,
+	CMD_TX_CUSTOM     = 0x07,
+	CMD_RX_CUSTOM     = 0x87,
 } cp_app_command;
 
 
@@ -76,6 +78,12 @@ typedef struct {
 	uint32_t   TimeStamp;
 	uint32_t   LoopTime; //seconds
 } stLoopData;
+
+typedef struct {
+	uint16_t   Len;
+	uint8_t    buffer[255];
+} customDataPacket;
+
 
 int  cp_uart_init(void);
 int  request_status(void);

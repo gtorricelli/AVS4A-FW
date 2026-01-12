@@ -1,2 +1,0 @@
-../ice40/ice40_programmer.c:35:6:ICE_SPI_WriteBlk	2
-../ice40/ice40_programmer.c:49:5:ice40_programming	10

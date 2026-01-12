@@ -1,7 +1,0 @@
-../task/sensors_task.c:71:16:getBatteryData	8	static
-../task/sensors_task.c:83:9:get_sensor_temp	4	static
-../task/sensors_task.c:87:9:get_sensor_humidity	4	static
-../task/sensors_task.c:91:9:get_charger_status	4	static
-../task/sensors_task.c:95:6:sensors_task_init	8	static
-../task/sensors_task.c:111:13:SensorRtTask	4	static
-../task/sensors_task.c:116:13:SensorMainTask	24	static

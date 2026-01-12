@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (13.3.rel1)
+# Toolchain: GNU Tools for STM32 (12.3.rel1)
 ################################################################################
 
 -include ../makefile.init
@@ -74,8 +74,8 @@ all:
 main-build: MCU_NDIR_H562_R0.elf secondary-outputs
 
 # Tool invocations
-MCU_NDIR_H562_R0.elf MCU_NDIR_H562_R0.map: $(OBJS) $(USER_OBJS) C:\Users\torri\OneDrive\Documenti\Lavoro\Qinova\Progetti\Monitoraggio\ Animali\ -\ CNIT\Firmware\AVS4A-FW\MCU_NDIR_H562_R0\STM32H562RGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "MCU_NDIR_H562_R0.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m33 -T"C:\Users\torri\OneDrive\Documenti\Lavoro\Qinova\Progetti\Monitoraggio Animali - CNIT\Firmware\AVS4A-FW\MCU_NDIR_H562_R0\STM32H562RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="MCU_NDIR_H562_R0.map" -Wl,--gc-sections -static -L../Middlewares/ST/ARM/DSP/Lib --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float
+MCU_NDIR_H562_R0.elf MCU_NDIR_H562_R0.map: $(OBJS) $(USER_OBJS) C:\Lavoro\QINOVA\STM32WS\MCU_NDIR_H562_R0\STM32H562RGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "MCU_NDIR_H562_R0.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m33 -T"C:\Lavoro\QINOVA\STM32WS\MCU_NDIR_H562_R0\STM32H562RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="MCU_NDIR_H562_R0.map" -Wl,--gc-sections -static -L../Middlewares/ST/ARM/DSP/Lib --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float
 	@echo 'Finished building target: $@'
 	@echo ' '
 

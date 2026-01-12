@@ -1,7 +1,0 @@
-../task/sensors_task.c:71:16:getBatteryData	1
-../task/sensors_task.c:83:9:get_sensor_temp	1
-../task/sensors_task.c:87:9:get_sensor_humidity	1
-../task/sensors_task.c:91:9:get_charger_status	1
-../task/sensors_task.c:95:6:sensors_task_init	1
-../task/sensors_task.c:111:13:SensorRtTask	1
-../task/sensors_task.c:116:13:SensorMainTask	18

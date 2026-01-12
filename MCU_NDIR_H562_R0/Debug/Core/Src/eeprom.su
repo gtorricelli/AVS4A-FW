@@ -1,2 +1,0 @@
-../Core/Src/eeprom.c:35:6:eeprom_write	32	static
-../Core/Src/eeprom.c:46:6:eeprom_read	32	static

@@ -26,6 +26,8 @@ static uint8_t u8ActiveState = 0;
 static unsigned char l_date[SIZE_DATE_INFO];
 
 
+static customDataPacket stCustomCommand;
+
 #define MESSAGE_HEADER_SIZE 4
 typedef enum {
           SOH  = 0xAA,
@@ -68,6 +70,10 @@ int   cp_uart_init(void)
 {
 	u8ActiveState = 0;
 	u8TickState   = 0;
+
+	stCustomCommand.Len = 16;
+	memset(stCustomCommand.buffer,0x00,255);
+
 	add_mainloop_funct(cp_uart_task, "cp_uart",1,0);
 	add_cyclical_funct(cp_uart_timer_task, 10, "cp_uart timer\0",0);
 	memset(l_date,0,SIZE_DATE_INFO);
@@ -215,7 +221,14 @@ static int  cp_decode_packet()
 	case CMD_RET_DATE://legge il tempo da linux che ha internet
 		uint32_t unixTime;
 		memcpy((uint8_t*)&unixTime,(unsigned char*)gRxMessage.RegBuffer,4);
-		rtc_unix_write((time_t)unixTime);
+		rtc_unix_write_utc((time_t)unixTime);
+		break;
+	case CMD_RX_CUSTOM:
+		//valuto lunghezza
+		if(gRxMessage.len > 255)
+			gRxMessage.len = 255;
+		stCustomCommand.Len = gRxMessage.len;
+		memcpy(stCustomCommand.buffer,(unsigned char*)gRxMessage.RegBuffer,stCustomCommand.Len);
 		break;
 	}
 
@@ -243,7 +256,7 @@ int  send_sensor_data(void)
 	MessagePacket_t gTxMessage;
 	int nBytes = 0;
 	uint32_t * u32fVal;
-	uint32_t tUnixTime = (uint32_t)rtc_unix_read();
+	uint32_t tUnixTime = (uint32_t)rtc_unix_read_utc();
 
 	gSensorData.BatteryChargeLevelRelative = getBatteryRelativeStateOfCharge();
 	gSensorData.BatteryCurrent             = getBatteryCurrentMa();

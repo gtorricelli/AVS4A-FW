@@ -1,8 +1,0 @@
-../task/pir_task.c:33:10:getPirvalue	2
-../task/pir_task.c:38:6:pir_task_init	2
-../task/pir_task.c:58:13:PirRtTask	5
-../task/pir_task.c:87:13:PirMainTask	12
-../task/pir_task.c:135:6:setDebounce_ms	1
-../task/pir_task.c:139:10:getDebounce_ms	1
-../task/pir_task.c:143:6:setMin_PIR_ms	1
-../task/pir_task.c:148:10:getMin_PIR_ms	1
