@@ -1,0 +1,2 @@
+../sensirion/utils/src/sensirion_temperature_unit_conversion.c:3:9:sensirion_celsius_to_fahrenheit	1
+../sensirion/utils/src/sensirion_temperature_unit_conversion.c:10:9:sensirion_fahrenheit_to_celsius	1

@@ -1,0 +1,11 @@
+../USB/Class/CDC/Src/usbd_cdc.c:290:16:USBD_CDC_Init	24	static
+../USB/Class/CDC/Src/usbd_cdc.c:385:16:USBD_CDC_DeInit	16	static
+../USB/Class/CDC/Src/usbd_cdc.c:429:16:USBD_CDC_Setup	40	static
+../USB/Class/CDC/Src/usbd_cdc.c:536:16:USBD_CDC_DataIn	24	static
+../USB/Class/CDC/Src/usbd_cdc.c:577:16:USBD_CDC_DataOut	24	static
+../USB/Class/CDC/Src/usbd_cdc.c:603:16:USBD_CDC_EP0_RxReady	32	static
+../USB/Class/CDC/Src/usbd_cdc.c:736:9:USBD_CDC_RegisterInterface	16	static
+../USB/Class/CDC/Src/usbd_cdc.c:759:9:USBD_CDC_SetTxBuffer	32	static
+../USB/Class/CDC/Src/usbd_cdc.c:787:9:USBD_CDC_SetRxBuffer	24	static
+../USB/Class/CDC/Src/usbd_cdc.c:809:9:USBD_CDC_TransmitPacket	24	static
+../USB/Class/CDC/Src/usbd_cdc.c:853:9:USBD_CDC_ReceivePacket	24	static

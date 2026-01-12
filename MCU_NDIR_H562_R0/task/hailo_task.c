@@ -5,21 +5,20 @@
  *      Author: rfacc
  */
 
+#include <stdio.h>
 #include "hailo_task.h"
 #include "KedOS.h"
 #include "main.h"
 #include "serial_com_task.h"
 #include "utility.h"
 #include "rtc_task.h"
-
+#include "string.h"
 
 
 uint8_t gu8HailoSync  = 0;
-HailoStatus gu8HailoState = INIT_POWER_IDLE;
+HailoStatus gu8HailoState = INIT_SYSTEM;
 
 
-static void hailo_syncTask();
-static void hailo_elab_task();
 uint8_t isHailoFlagActive();
 uint8_t setHailoRequestFlag(uint8_t val);
 static int32_t  nTimeOut = 10;
@@ -27,8 +26,6 @@ static uint8_t  gbHailoRequest=1;
 static uint8_t  gbRtcRequest=0;
 static uint8_t  gbLinuxAlive=0;
 static uint8_t  g_u8LinuxReadyFlag = 0;
-static uint8_t  g_u8HailoReadyFlag = 0;
-static uint8_t  l_startuplinux = 0;
 static uint8_t  g_DisableTask = 0;
 static uint8_t  l_bpirEvent=0;
 
@@ -50,7 +47,7 @@ static void Hailo_elab_task();
 void hailo_task_init()
 {
 	gu8HailoSync  = 0;
-	gu8HailoState = INIT_POWER_IDLE;
+	gu8HailoState = INIT_SYSTEM;
 	gbLinuxAlive  = ALIVE_DEFAULT;
 	gbHailoRequest= 1;
 	nTimeOut      = 10;
@@ -75,15 +72,6 @@ void resetReadyStatus()
 	g_u8LinuxReadyFlag=0;
 }
 
-void setReadyHailo(uint8_t on)
-{
-	g_u8HailoReadyFlag=on;
-}
-
-uint8_t getReadyHailo()
-{
-	return g_u8HailoReadyFlag;
-}
 
 int GetHailoPhase()
 {
@@ -105,6 +93,7 @@ int enwhiteled(uint8_t on)
 	{
 		HAL_GPIO_WritePin(EN_WHITE_GPIO_Port, EN_WHITE_Pin, GPIO_PIN_RESET);
 	}
+	return 0;
 }
 
 static void Hailo_elab_task()
@@ -121,130 +110,81 @@ static void Hailo_elab_task()
 
 	switch(gu8HailoState)
 	{
-	case INIT_POWER_IDLE:
+
+	case INIT_SYSTEM:
 		EnableSOM(GPIO_PIN_RESET);
-        rtc_task_init();//avvio del task rtc, one shot
-		gu8HailoState = IDLE;
+		gu8HailoState = SYSTEM_IDLE;
 		HAL_Delay(800);
 		break;
-	case IDLE:
+	case SYSTEM_IDLE:
 		enwhiteled( GPIO_PIN_RESET);
-		if(isPirevent())
+		if(isLinuxAlive())
+		{
+			gu8HailoState = INIT_POWER_SYSTEM;
+		}
+		else if(isPirevent())
 		{
 			resetPirEvent();
 			nTimeOut = SETUP_TIME;
 			gu8HailoState = INIT_POWER_SYSTEM;
 		}
 		break;
+
 	case INIT_POWER_SYSTEM :
-		if(nTimeOut==0)//linux non si avvia oppure non risponde alla richiesta di Ready
-		{
-			if(!isRtcFlagActive())
-			{
-				segnala_errore(RTCTIMEGETERROR);
-				gu8HailoState = IDLE;
-			}
-			if(!isHailoFlagActive())
-			{
-				segnala_errore(HAILOFLAG);
-				gu8HailoState = IDLE;
-			}
-			return;
-		}
-		l_startuplinux=1;
 		EnableSOM(GPIO_PIN_SET);
 		enwhiteled( GPIO_PIN_RESET);
-		gu8HailoState = CHECK_HAILO_WITH_PING;
-		nTimeOut = PINGTIMEOUT;
-		send_ping();
+		gu8HailoState = CHECK_HAILO_STARTED;
+		nTimeOut      = LINUX_START_TIMEOUT;
 		break;
 
-	case CHECK_HAILO_WITH_PING:
+	case CHECK_HAILO_STARTED:
+		send_ping();
 		if(nTimeOut==0)
-		{//linux non si avvia oppure non risponde alla richiesta di Ready
-			segnala_errore(LINUXOFFERROR);
-			gu8HailoState = LINUX_HAILO_POWEROFF;
-			return;
+		{
+			if(isLinuxAlive()==0)
+			{
+				//linux non si avvia oppure non risponde alla richiesta di Ready
+				nTimeOut      = 0;
+				segnala_errore(LINUXOFFERROR);
+				gu8HailoState = LINUX_HAILO_POWEROFF;
+				return;
+			}
+			nTimeOut      = LINUX_START_TIMEOUT;
 		}
 		if(g_u8LinuxReadyFlag == 0)
-		{//aspetto che linux si sia attivato
+		{
+			//aspetto che linux si sia attivato
 			return;
 		}
-		if(l_startuplinux)
-		{//avvio subito operazioni, linux appena avviato
-			gu8HailoState = LINUX_HAILO_ACTIVE;
-		 	l_startuplinux=0;
-		}
-		else
-		{//da gestire comandi in arrivo da linux o ritorno a nuovo ping dopo intervallo di tempo
-			if(isLinuxAlive()==0)
-			{//massimo tempo di attesa con linux attivo senza eventi
-				nTimeOut = LINUX_IDLE_MAXTIME;
-			    gu8HailoState = IDLE_WAIT_TIMEOUT;
-			}
-			else
-			{//linux sempre attivo
-				nTimeOut = PINGTIMEOUT;//ping periodico
-				gu8HailoState = IDLE_WAIT;
-			}
-		}
+		send_sensor_data();
+		nTimeOut      = LINUX_IDLE_MAXTIME;
+		gu8HailoState = LINUX_HAILO_ACTIVE;
 		break;
 	case LINUX_HAILO_ACTIVE:
-		//e accende leds dissuasivi
-		enwhiteled( GPIO_PIN_SET);
-	    //invia dati
-		send_sensor_data();
-		setReadyHailo (0);
-		nTimeOut      = LEDS_FLASH_TIME;
-		gu8HailoState = LINUX_HAILO_STOP_LED;
-		break;
-	case  LINUX_HAILO_STOP_LED:
-		//Timeout spengimento leds
-		if(nTimeOut> 0)
-		{
-			return;
-		}
-		setReadyHailo (1);
-		enwhiteled( GPIO_PIN_RESET);
-		nTimeOut = PINGTIMEOUT;
-		gu8HailoState = CHECK_HAILO_WITH_PING;
+		//invio ping per controllare lo stato di linux
+		resetReadyStatus();
 		send_ping();
-		break;
-	case IDLE_WAIT_TIMEOUT:
 		if(isPirevent())
 		{
 			resetPirEvent();
-			gu8HailoState = LINUX_HAILO_ACTIVE;
+			nTimeOut      = LINUX_IDLE_MAXTIME;
 			return;
 		}
-		if(nTimeOut>0) return;
-		request_halt();//time out, chiude linux
-		gu8HailoState = LINUX_HAILO_SHUTDOWN;
-		nTimeOut=LINUX_STOP_TIME;
-		break;
-	case IDLE_WAIT:
-		if(isPirevent())
+		if(nTimeOut==0)
 		{
-			resetPirEvent();
-			gu8HailoState = LINUX_HAILO_ACTIVE;
+			if(isLinuxAlive()==0)
+			{
+				request_halt();
+				nTimeOut      = LINUX_STOP_TIME;
+				gu8HailoState = LINUX_HAILO_POWEROFF;
+			}
+			return;
 		}
-		if(nTimeOut<= 0)
-		{//nuovo ping periodico
-			gu8HailoState = CHECK_HAILO_WITH_PING;
-			send_ping();
-		}
-		break;
-	case LINUX_HAILO_SHUTDOWN:
-		if(nTimeOut>0) return;
-	//	UART4_MUX_DISABLE();
-		HAL_Delay(100);
-		//spenge il sistema e attende che sia dato il sincronismo di una nuova accensione dall'rtc_task
-		EnableSOM(GPIO_PIN_RESET);
-		//HAL_UART_MspDeInit(&huart4);
-    	gu8HailoState = LINUX_HAILO_POWEROFF;
 		break;
 	case LINUX_HAILO_POWEROFF:
-    	gu8HailoState = IDLE;
+		if(nTimeOut>0) return;
+		EnableSOM(GPIO_PIN_RESET);
+    	gu8HailoState = SYSTEM_IDLE;
 		break;
 	}
 }
@@ -273,14 +213,12 @@ uint8_t isRtcFlagActive()
 	return value;
 }
 
-
-
 void setPirEvent(int id)
 {
 	char string[256];
 	memset(string,0,256);
 	sprintf(string,"Pir Event[%d]\r\n",id);
-	outterm_send(string,strlen(string));
+	outterm_send((uint8_t*)string,strlen(string));
 	l_bpirEvent=1;
 }
 
@@ -295,7 +233,8 @@ uint8_t isPirevent()
 }
 
 int  setLinuxAlive(uint8_t enable)
-{//se abilitato evita di chiudere linux dopo il timeout
+{
+	//se abilitato evita di chiudere linux dopo il timeout
 	if(enable != 0)enable=1;
 	gbLinuxAlive = enable;
 	return gbLinuxAlive;

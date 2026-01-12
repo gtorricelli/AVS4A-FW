@@ -10,7 +10,11 @@
 #include "sensors_task.h"
 #include "bme_task.h"
 #include "pir_task.h"
+#include "rtc_task.h"
 #include "time.h"
+#include "hailo_task.h"
+#include "serial_com_task.h"
+
 
 #define ENOERR           0
 #define MAX_OPTIONS      10             /**< Max number of options for a command */
@@ -18,22 +22,22 @@
 /**
 * @brief Command function pointer type definition
 */
-typedef int32_t (*cmd_func)(const int8_t *[]);
+typedef int32_t (*cmd_func)(char *[]);
 
 /**
 * @brief Command descriptor
 */
 typedef struct shell_command
 {
-    int8_t *cmd_name;                   /**< Command name */
-    int8_t *cmd_descr;                  /**< Command description name */
-    int8_t *cmd_help;                   /**< Command string */
+    char *cmd_name;                   /**< Command name */
+    char *cmd_descr;                  /**< Command description name */
+    char *cmd_help;                   /**< Command string */
     cmd_func func;                      /**< Command function */
-    int8_t *cmd_options[MAX_OPTIONS];   /**< Command options */
+    char *cmd_options[MAX_OPTIONS];   /**< Command options */
 } shell_command_st;
 
 static bool_t  init = TRUE;
-static int32_t print_help        (int8_t *_opts[]);
+static int32_t print_help        (char *_opts[]);
 static int32_t i2c_bus_scan      (char *_opts[]);
 static int32_t mpp               (char *_opts[]);
 static int32_t en20v             (char *_opts[]);
@@ -49,6 +53,11 @@ static int32_t setMinPIRsg       (char *_opts[]);
 static int32_t fwupgrade         (char *_opts[]);
 static int32_t fwVersione        (char *_opts[]);
 static int32_t system_date       (char *_opts[]);
+static int32_t ping              (char *_opts[]);
+static int32_t halt              (char *_opts[]);
+static int32_t system_on         (char *_opts[]);
+
+
 static shell_command_st commands[] =
 {
 	{"help","                 Print this list"      		, NULL, print_help},
@@ -67,6 +76,9 @@ static shell_command_st commands[] =
     {"date","                 Set/Get rtc time"             , NULL, system_date, {NULL}},
 	{"fw","                   FIRMWARE UPGRADE"             , NULL, fwupgrade, {NULL}},
 	{"ver","                  FIRMWARE VERSION"             , NULL, fwVersione, {NULL}},
+    {"on","                   Force Linux On"               , NULL, system_on, {NULL}},
+    {"ping","                 send ping to app"             , NULL, ping, {NULL}},
+    {"halt","                 send halt to Linux"           , NULL, halt, {NULL}},
 };                                                                  /**< Commands array */
 
 /* API functions */
@@ -150,7 +162,7 @@ void shell_task(void)
 * @return none
 * traceability: -
 */
-static int32_t print_help(int8_t *_opts[])
+static int32_t print_help(char *_opts[])
 {
     int32_t i;
     int32_t exit_status_;
@@ -526,69 +538,59 @@ static int32_t pir               (char *_opts[])
 
 static int32_t system_date       (char *_opts[])
 {
-	struct tm time;
+	time_t unixtime;
+    struct tm *timeinfo;
 	char *token;
-	RTC_TimeTypeDef sTime = {0};
-	RTC_DateTypeDef sDate = {0};
-
-	//    int    tm_sec   Seconds [0,60].
-	//    int    tm_min   Minutes [0,59].
-	//    int    tm_hour  Hour [0,23].
-	//    int    tm_mday  Day of month [1,31].
-	//    int    tm_mon   Month of year [0,11].
-	//    int    tm_year  Years since 1900.
-	//    int    tm_wday  Day of week [0,6] (Sunday =0).
-	//    int    tm_yday  Day of year [0,365].
-	//    int    tm_isdst Daylight Savings flag.
 
 	if (_opts[0] == NULL)
 	{
-		date_read(&time);
-		printf("Date:%04d-%02d-%2d %02d:%02d:%02d\r\n",time.tm_year+1900,time.tm_mon+1,time.tm_mday,time.tm_hour,time.tm_min,time.tm_sec);
+		unixtime =  rtc_unix_read();
+		timeinfo = localtime(&unixtime); // converte in struct tm (ora locale)
+		printf("Date:%04d-%02d-%2d %02d:%02d:%02d\r\n",
+				timeinfo->tm_year+1900,
+				timeinfo->tm_mon+1,
+				timeinfo->tm_mday,
+				timeinfo->tm_hour,
+				timeinfo->tm_min,
+				timeinfo->tm_sec);
 		return 0;
 	}
 	if (_opts[1] != NULL)
 	{
 
-		token = strtok(_opts[0], "-");
-		if(token==NULL) return -1;
-		time.tm_year = atoi(token)-1900;
-//		time.tm_year = atoi(token);
+//		token = strtok(_opts[0], "-");
+//		if(token==NULL) return -1;
+//		time.tm_year = atoi(token)-1900;
+//
+//		token = strtok(NULL, "-");
+//		if(token==NULL) return -1;
+//		time.tm_mon  = atoi(token)-1;
+//
+//		token = strtok(NULL, "-");
+//		if(token==NULL) return -1;
+//		time.tm_mday = atoi(token);
+//
+//		token = strtok(_opts[1], ":");
+//		if(token==NULL) return -1;
+//		time.tm_hour = atoi(token);
+//
+//		token = strtok(NULL, ":");
+//		if(token==NULL) return -1;
+//		time.tm_min  = atoi(token);
+//
+//		token = strtok(NULL, ":");
+//		if(token==NULL) return -1;
+//		time.tm_sec = atoi(token);
+//
+//		time.tm_wday=rtc_dow(time.tm_year+1900,time.tm_mon+1,time.tm_mday);
+//		sDate.Date  = time.tm_mday;
+//		sDate.Month = time.tm_mon;
+//		sDate.Year  = time.tm_year;  // Last two digits (00–99)
+//
+//		sTime.Hours   = time.tm_hour;
+//		sTime.Minutes = time.tm_min;
+//		sTime.Seconds = time.tm_sec;
 
-		token = strtok(NULL, "-");
-		if(token==NULL) return -1;
-		time.tm_mon  = atoi(token)-1;
-
-		token = strtok(NULL, "-");
-		if(token==NULL) return -1;
-		time.tm_mday = atoi(token);
-
-		token = strtok(_opts[1], ":");
-		if(token==NULL) return -1;
-		time.tm_hour = atoi(token);
-
-		token = strtok(NULL, ":");
-		if(token==NULL) return -1;
-		time.tm_min  = atoi(token);
-
-		token = strtok(NULL, ":");
-		if(token==NULL) return -1;
-		time.tm_sec = atoi(token);
-
-//		time.tm_wday=rtc_dow(time.tm_year,time.tm_mon+1,time.tm_mday);
-		time.tm_wday=rtc_dow(time.tm_year+1900,time.tm_mon+1,time.tm_mday);
-		//	pcf8563_write(&time);
-		sDate.Date  = time.tm_mday;
-		sDate.Month = time.tm_mon;
-		sDate.Year  = time.tm_year;  // Last two digits (00–99)
-		//    sDate.WeekDay = time.tm_mday; // WeekDay required but ignored; can be computed if needed
-
-		sTime.Hours   = time.tm_hour;
-		sTime.Minutes = time.tm_min;
-		sTime.Seconds = time.tm_sec;
-
-		//	setRtcAlarmsNumber(getRtcAlarmsNumber(),1);
-		setCurrRTC(&sTime,&sDate);
 	}
 	else
 	{
@@ -599,4 +601,28 @@ static int32_t system_date       (char *_opts[])
 	return 0;
 }
 
+static int32_t halt(char *_opts[])
+{
+	request_halt();
+	return 0;
+}
+
+static int32_t ping           (char *_opts[])
+{
+	send_ping();
+	return 0;
+}
+
+static int32_t system_on         (char *_opts[])
+{
+	int nAlive;
+    if (_opts[0] == NULL)
+    {
+    	printf("Linux Alive %d\r\n",isLinuxAlive());
+    	return 0;
+    }
+    nAlive = atoi(_opts[0]);
+    setLinuxAlive(nAlive);
+	return 0;
+}
 

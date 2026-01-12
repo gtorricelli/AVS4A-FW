@@ -1,0 +1,2 @@
+../Core/Src/icache.c:53:6:MPU_Config	1
+../Core/Src/icache.c:83:6:MX_ICACHE_Init	3

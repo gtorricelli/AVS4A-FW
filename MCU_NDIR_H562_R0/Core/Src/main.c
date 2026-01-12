@@ -42,6 +42,8 @@
 #include "dcache.h"
 #include "iwdg.h"
 #include "hailo_task.h"
+#include "rtc_task.h"
+#include "serial_com_task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -239,10 +241,12 @@ static void OS_Task_Init()
 {
 	init_os(&main_dispatcher, &isr_dispatcher);
 	blink_task_init();//heart beat, non abilitare
+    rtc_task_init();//avvio del task rtc
 	bme_task_init();
 	shell_task_init();
 	sensors_task_init();
 	pir_task_init();
+	cp_uart_init();
 	hailo_task_init();
 }
 /* USER CODE END 4 */

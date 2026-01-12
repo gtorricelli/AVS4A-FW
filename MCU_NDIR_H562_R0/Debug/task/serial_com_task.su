@@ -1,0 +1,16 @@
+../task/serial_com_task.c:52:10:outterm_send	16	static
+../task/serial_com_task.c:57:10:sp_uart_send	16	static
+../task/serial_com_task.c:62:5:sp_uart_receive	16	static
+../task/serial_com_task.c:67:7:cp_uart_init	8	static
+../task/serial_com_task.c:77:6:cp_uart_timer_task	4	static
+../task/serial_com_task.c:82:6:cp_uart_task	16	static
+../task/serial_com_task.c:92:12:cp_process_packet	24	static
+../task/serial_com_task.c:172:12:cp_send_packet	24	static
+../task/serial_com_task.c:197:13:cp_decode_packet	16	static
+../task/serial_com_task.c:225:6:request_status	152	static
+../task/serial_com_task.c:241:6:send_sensor_data	160	static
+../task/serial_com_task.c:291:6:request_flash	152	static
+../task/serial_com_task.c:306:6:request_halt	152	static
+../task/serial_com_task.c:321:6:request_param	152	static
+../task/serial_com_task.c:337:6:request_date	152	static
+../task/serial_com_task.c:352:6:send_ping	152	static

@@ -1,0 +1,2 @@
+../Core/Src/eeprom.c:35:6:eeprom_write	1
+../Core/Src/eeprom.c:46:6:eeprom_read	1

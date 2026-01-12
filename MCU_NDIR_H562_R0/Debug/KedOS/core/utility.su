@@ -1,0 +1,14 @@
+../KedOS/core/utility.c:44:6:memset8	32	static
+../KedOS/core/utility.c:59:6:memcpy32	32	static
+../KedOS/core/utility.c:79:6:int8_t_to_char	16	static
+../KedOS/core/utility.c:112:6:uint8_t_to_string	24	static
+../KedOS/core/utility.c:141:9:uint16_t_to_string	24	static
+../KedOS/core/utility.c:171:9:uint32_t_to_string	32	static
+../KedOS/core/utility.c:201:6:sint8_t_to_string	24	static
+../KedOS/core/utility.c:231:6:int16_t_to_string	24	static
+../KedOS/core/utility.c:262:6:word_to_char	24	static
+../KedOS/core/utility.c:285:6:long_to_char	24	static
+../KedOS/core/utility.c:308:6:int8_t_to_bcd	24	static
+../KedOS/core/utility.c:332:9:trim_zero	24	static
+../KedOS/core/utility.c:369:6:str_copy	32	static
+../KedOS/core/utility.c:389:6:segnala_errore	16	static

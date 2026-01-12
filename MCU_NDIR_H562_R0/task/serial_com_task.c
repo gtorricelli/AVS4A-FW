@@ -12,6 +12,10 @@
 #include "bsp.h"
 #include "usb.h"
 #include "hailo_task.h"
+#include "rtc_task.h"
+
+#include <usbd_cdc_if.h>
+
 static int cp_process_packet(void);
 static int cp_decode_packet();
 static int cp_send_packet(MessagePacket_t* pMessage);
@@ -20,19 +24,6 @@ static uint8_t u8TickState = 0;
 static uint8_t u8ActiveState = 0;
 #define SIZE_DATE_INFO 8
 static unsigned char l_date[SIZE_DATE_INFO];
-
-typedef struct {
-	uint8_t   bNtpUpdate;
-	uint8_t   hour;
-	uint8_t   minute;
-	uint8_t   seconds;
-	uint8_t   day;
-	uint8_t   month;
-	uint8_t   year;
-	uint8_t   dayShoots;
-} stProcessConfigTime;
-
-static stProcessConfigTime gConfigTime;
 
 
 #define MESSAGE_HEADER_SIZE 4
@@ -63,7 +54,6 @@ uint16_t outterm_send(uint8_t * buff, uint16_t len)
 	return CDC_Transmit_Buffered(buff, len,CDC_SERIAL2);
 }
 
-
 uint16_t sp_uart_send(uint8_t * buff, uint16_t len)
 {
 	return CDC_Transmit_Buffered(buff, len,CDC_SERIAL0);
@@ -76,13 +66,11 @@ int sp_uart_receive(uint8_t* _char)
 
 int   cp_uart_init(void)
 {
-	sp_uart_init();
 	u8ActiveState = 0;
 	u8TickState   = 0;
 	add_mainloop_funct(cp_uart_task, "cp_uart",1,0);
 	add_cyclical_funct(cp_uart_timer_task, 10, "cp_uart timer\0",0);
 	memset(l_date,0,SIZE_DATE_INFO);
-
 	return 0;
 }
 
@@ -114,7 +102,8 @@ static int cp_process_packet(void)
 	int nRet = 0x00;
 
 	uint8_t* pMessage = (uint8_t*)&gRxMessage;
-	bElapsed = _time_elapsed(startTimer,timeoutTimer);
+
+	bElapsed = time_elapsed_ms(startTimer,timeoutTimer);
 	if((u8RxStatus > WAIT_SOH) && (bElapsed > 0))
 	{
 		u8RxStatus  = WAIT_SOH;
@@ -208,7 +197,6 @@ static int cp_send_packet(MessagePacket_t* pMessage)
 static int  cp_decode_packet()
 {
 	static uint32_t rx_cnt = 0;
-	struct tm time;
 	if(gRxMessage.destination != ID_MICRO) return -1;
 
 	rx_cnt++;
@@ -225,13 +213,9 @@ static int  cp_decode_packet()
 		setReadyStatus();
 		break;
 	case CMD_RET_DATE://legge il tempo da linux che ha internet
-		memcpy((uint8_t*)&gConfigTime,(unsigned char*)gRxMessage.RegBuffer,SIZE_DATE_INFO);
-		time.tm_hour = gConfigTime.hour;
-		time.tm_min  = gConfigTime.minute;
-		time.tm_sec  = gConfigTime.seconds;
-		time.tm_year = gConfigTime.year;
-		time.tm_mon  = gConfigTime.month;
-		time.tm_mday = gConfigTime.day;
+		uint32_t unixTime;
+		memcpy((uint8_t*)&unixTime,(unsigned char*)gRxMessage.RegBuffer,4);
+		rtc_unix_write((time_t)unixTime);
 		break;
 	}
 
@@ -258,32 +242,23 @@ int  send_sensor_data(void)
 {
 	MessagePacket_t gTxMessage;
 	int nBytes = 0;
-	struct tm time;
 	uint32_t * u32fVal;
+	uint32_t tUnixTime = (uint32_t)rtc_unix_read();
 
 	gSensorData.BatteryChargeLevelRelative = getBatteryRelativeStateOfCharge();
-//	gSensorData.BatteryChargeLevelAbs      = getBatteryAbsoluteStateOfCharge();
+	gSensorData.BatteryCurrent             = getBatteryCurrentMa();
+	gSensorData.BatteryVoltage             = getBatteryVoltageMv();
+	gSensorData.BatteryAverageCurrent      = getBatteryAverageCurrentMa();
+	gSensorData.bmePressure                = get_bme_pressure();
+	gSensorData.bmeTemp                    = get_bme_temp();
+	gSensorData.bmeHum                     = get_bme_humidity();
 
-	gSensorData.BatteryCurrent        = getBatteryCurrentMa();
-	gSensorData.BatteryVoltage        = getBatteryVoltageMv();
-	gSensorData.BatteryAverageCurrent = getBatteryAverageCurrentMa();
-	gSensorData.bmePressure           = get_bme_pressure();
-	gSensorData.bmeTemp               = get_bme_temp();
-	gSensorData.bmeHum                = get_bme_humidity();
-	gSensorData.inputState            = 0x0;
-	gSensorData.outputState           = 0x0;
 
 	gTxMessage.source       = ID_MICRO;
 	gTxMessage.destination  = ID_CPU;
 	gTxMessage.command_id   = CMD_SEND_SENSOR;
-	nBytes += unpack8(&gTxMessage.RegBuffer[nBytes],time.tm_hour);
-	nBytes += unpack8(&gTxMessage.RegBuffer[nBytes],time.tm_min);
-	nBytes += unpack8(&gTxMessage.RegBuffer[nBytes],time.tm_sec);
-	nBytes += unpack8(&gTxMessage.RegBuffer[nBytes],time.tm_mday);
-	nBytes += unpack8(&gTxMessage.RegBuffer[nBytes],time.tm_mon);
-	nBytes += unpack8(&gTxMessage.RegBuffer[nBytes],time.tm_year);
-	nBytes += unpack8(&gTxMessage.RegBuffer[nBytes],0);
-	nBytes += unpack8(&gTxMessage.RegBuffer[nBytes],0);
+
+	nBytes += unpack32le(&gTxMessage.RegBuffer[nBytes],tUnixTime);
 
 	nBytes += unpack16le(&gTxMessage.RegBuffer[nBytes],gSensorData.BatteryVoltage);
 	nBytes += unpack16le(&gTxMessage.RegBuffer[nBytes],gSensorData.BatteryCurrent);
@@ -291,8 +266,10 @@ int  send_sensor_data(void)
 	nBytes += unpack16le(&gTxMessage.RegBuffer[nBytes],gSensorData.BatteryChargeLevelAbs);
 	nBytes += unpack16le(&gTxMessage.RegBuffer[nBytes],gSensorData.BatteryAverageCurrent);
 
-	nBytes += unpack8(&gTxMessage.RegBuffer[nBytes],gSensorData.inputState);
-	nBytes += unpack8(&gTxMessage.RegBuffer[nBytes],gSensorData.outputState);
+	nBytes += unpack8(&gTxMessage.RegBuffer[nBytes],gSensorData.pir_state[0]);
+	nBytes += unpack8(&gTxMessage.RegBuffer[nBytes],gSensorData.pir_state[1]);
+	nBytes += unpack8(&gTxMessage.RegBuffer[nBytes],gSensorData.pir_state[2]);
+	nBytes += unpack8(&gTxMessage.RegBuffer[nBytes],gSensorData.pir_state[3]);
 
 	u32fVal = (uint32_t*)&gSensorData.bmePressure;
 	nBytes += unpack32le(&gTxMessage.RegBuffer[nBytes],*u32fVal);
@@ -302,7 +279,6 @@ int  send_sensor_data(void)
 
 	u32fVal = (uint32_t*)&gSensorData.bmeHum;
 	nBytes += unpack32le(&gTxMessage.RegBuffer[nBytes],*u32fVal);
-
 
 	nBytes += unpack8(&gTxMessage.RegBuffer[nBytes],gSensorData.bUpdate);
 

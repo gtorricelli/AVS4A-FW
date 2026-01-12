@@ -65,8 +65,6 @@ typedef struct {
 	uint16_t   BatteryChargeLevelAbs;/*0-1000 1000 = 100%*/
 	uint16_t   BatteryChargeLevelRelative;/*0-1000 1000 = 100%*/
 	int16_t    BatteryAverageCurrent;//corrente media della batteria
-	uint8_t    inputState;
-	uint8_t    outputState;
 	uint8_t    pir_state[4];
 	float      bmePressure;
 	float      bmeTemp;

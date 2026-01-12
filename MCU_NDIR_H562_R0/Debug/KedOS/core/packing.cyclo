@@ -1,0 +1,10 @@
+../KedOS/core/packing.c:62:9:unpack8	1
+../KedOS/core/packing.c:78:9:unpack16	1
+../KedOS/core/packing.c:95:9:unpack32	1
+../KedOS/core/packing.c:114:9:unpack16le	1
+../KedOS/core/packing.c:131:9:unpack32le	1
+../KedOS/core/packing.c:150:9:pack8	2
+../KedOS/core/packing.c:166:9:pack16	2
+../KedOS/core/packing.c:183:9:pack32	2
+../KedOS/core/packing.c:202:9:pack16le	2
+../KedOS/core/packing.c:219:9:pack32le	2

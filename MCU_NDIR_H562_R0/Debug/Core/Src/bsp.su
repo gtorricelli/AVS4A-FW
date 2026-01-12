@@ -1,0 +1,16 @@
+../Core/Src/bsp.c:20:5:_write	32	static
+../Core/Src/bsp.c:36:5:__io_putchar	24	static
+../Core/Src/bsp.c:52:5:__io_getchar	16	static
+../Core/Src/bsp.c:70:10:_disable_scheduler	4	static
+../Core/Src/bsp.c:75:10:_enable_scheduler	4	static
+../Core/Src/bsp.c:79:10:_enable_irq	4	static,ignoring_inline_asm
+../Core/Src/bsp.c:84:10:_disable_irq	4	static,ignoring_inline_asm
+../Core/Src/bsp.c:89:10:_get_sys_clock	8	static
+../Core/Src/bsp.c:101:10:_time_measure	24	static
+../Core/Src/bsp.c:119:10:_time_elapsed	24	static
+../Core/Src/bsp.c:137:10:time_measure_ms	16	static
+../Core/Src/bsp.c:142:10:time_elapsed_ms	24	static
+../Core/Src/bsp.c:153:10:get_clock_ms	8	static
+../Core/Src/bsp.c:157:6:_delayInit	8	static
+../Core/Src/bsp.c:164:10:_delay_us	16	static
+../Core/Src/bsp.c:171:10:_delay_ms	16	static

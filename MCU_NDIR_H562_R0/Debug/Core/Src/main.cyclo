@@ -1,0 +1,5 @@
+../Core/Src/main.c:88:5:main	2
+../Core/Src/main.c:164:6:SystemClock_Config	4
+../Core/Src/main.c:225:6:PeriphCommonClock_Config	2
+../Core/Src/main.c:240:13:OS_Task_Init	1
+../Core/Src/main.c:258:6:Error_Handler	1

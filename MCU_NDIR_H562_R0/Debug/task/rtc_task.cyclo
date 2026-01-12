@@ -1,0 +1,10 @@
+../task/rtc_task.c:29:7:rtc_task_init	1
+../task/rtc_task.c:37:6:rtc_timer_task	1
+../task/rtc_task.c:42:11:rtc_to_tm	1
+../task/rtc_task.c:67:8:rtc_unix_read	1
+../task/rtc_task.c:79:5:rtc_unix_write	1
+../task/rtc_task.c:83:6:rtc_task	5
+../task/rtc_task.c:114:5:setCurrRTC	3
+../task/rtc_task.c:128:5:rtc_leap	2
+../task/rtc_task.c:139:5:rtc_zeller	1
+../task/rtc_task.c:148:5:rtc_dow	1

@@ -1,0 +1,15 @@
+../KedOS/core/kedOS.c:88:6:init_os	3
+../KedOS/core/kedOS.c:121:8:add_mainloop_funct	3
+../KedOS/core/kedOS.c:151:8:remove_mainloop_funct	7
+../KedOS/core/kedOS.c:195:8:isTaskLive	3
+../KedOS/core/kedOS.c:211:9:get_timing_mainloop	2
+../KedOS/core/kedOS.c:219:6:get_name_mainloop	2
+../KedOS/core/kedOS.c:225:9:get_timing_cyclical	2
+../KedOS/core/kedOS.c:232:6:reset_uos_timing	3
+../KedOS/core/kedOS.c:241:6:get_name_cyclical	2
+../KedOS/core/kedOS.c:257:8:add_cyclical_funct	4
+../KedOS/core/kedOS.c:289:8:remove_cyclical_funct	7
+../KedOS/core/kedOS.c:343:13:main_loop_funct	3
+../KedOS/core/kedOS.c:369:6:isr_funct	4
+../KedOS/core/kedOS.c:402:8:remove_no_critical_task	19
+../KedOS/core/kedOS.c:499:10:_get_os_timer	1

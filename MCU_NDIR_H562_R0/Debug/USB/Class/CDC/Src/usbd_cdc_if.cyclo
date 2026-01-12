@@ -1,0 +1,11 @@
+../USB/Class/CDC/Src/usbd_cdc_if.c:126:15:CDC_Init	4
+../USB/Class/CDC/Src/usbd_cdc_if.c:177:15:CDC_DeInit	4
+../USB/Class/CDC/Src/usbd_cdc_if.c:222:15:CDC_Control	8
+../USB/Class/CDC/Src/usbd_cdc_if.c:330:15:CDC_Receive	5
+../USB/Class/CDC/Src/usbd_cdc_if.c:356:5:CDC_Get_Char_FS	3
+../USB/Class/CDC/Src/usbd_cdc_if.c:370:5:CDC_USB_IsConnected	1
+../USB/Class/CDC/Src/usbd_cdc_if.c:375:5:CDC_USB_IsPortOpen	1
+../USB/Class/CDC/Src/usbd_cdc_if.c:380:9:CDC_Transmit	3
+../USB/Class/CDC/Src/usbd_cdc_if.c:394:16:CDC_Trasmit_Fifo	2
+../USB/Class/CDC/Src/usbd_cdc_if.c:409:9:CDC_Transmit_Buffered	2
+../USB/Class/CDC/Src/usbd_cdc_if.c:443:15:CDC_TransmitCplt	2

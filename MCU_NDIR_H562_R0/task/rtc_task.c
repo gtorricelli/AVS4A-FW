@@ -9,7 +9,7 @@
 #include "serial_com_task.h"
 #include <string.h>
 #include "utility.h"
-#include "time.h"
+
 
 #define MSECS_TASK 1000
 
@@ -17,16 +17,18 @@
 static void rtc_task(void);
 static void rtc_timer_task(void);
 static uint8_t u8TickState = 0;
-static int gnTimeLeft = 0;
-int32_t date_read(struct tm *time);
-static uint16_t gntpRequestActive = 0;
 int setCurrRTC(RTC_TimeTypeDef*pTime,RTC_DateTypeDef*pDate);
 int rtc_dow (int year, int month, int day);
 int rtc_zeller (int year, int month, int day);
 int rtc_leap (int year);
 
+static time_t gUnixTimeStamp;
+static time_t gStartUnixTime = 0;
+static time_t gInterval = 60; // Intervallo di allarme in secondi
+
 int   rtc_task_init(void)
 {
+	gStartUnixTime = rtc_unix_read();
 	add_mainloop_funct(rtc_task, "rtc_task",1,0);
 	add_cyclical_funct(rtc_timer_task, MSECS_TASK, "rtc timer\0",CRITICAL_TASK);
     return 0;
@@ -36,7 +38,6 @@ void rtc_timer_task(void)
 {
 	u8TickState=1;
 }
-
 
 struct tm rtc_to_tm(RTC_TimeTypeDef *t, RTC_DateTypeDef *d)
 {
@@ -63,42 +64,41 @@ struct tm rtc_to_tm(RTC_TimeTypeDef *t, RTC_DateTypeDef *d)
 
     return tm_time;
 }
-
-int32_t date_read(struct tm *time)
+time_t rtc_unix_read()
 {
 	RTC_TimeTypeDef sTime;
 	RTC_DateTypeDef sDate;
-
+	struct tm tm_time;
 	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
 	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-	*time=rtc_to_tm(&sTime,&sDate);
+	tm_time=rtc_to_tm(&sTime,&sDate);
+//	time_t unixtime = mktime(&time);
+	time_t unixtime = mktime(&tm_time);
+	return unixtime;
 }
-
+int rtc_unix_write(time_t unixtime)
+{
+	return 0;
+}
 void rtc_task()
 {
-	struct tm time;
-	int nSecondsTime=0;
+	double diffUnixTime = 0;
+	time_t tTimeElapsed     = 0;
+
+
 	if(u8TickState == 0) return;
 	u8TickState=0;
 
-//	RTC_TimeTypeDef sTime;
-//	RTC_DateTypeDef sDate;
-//
-//	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-//	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-//
-////	uint8_t hours = sTime.Hours;
-////	uint8_t minutes = sTime.Minutes;
-////	uint8_t seconds = sTime.Seconds;
-////
-////	uint8_t day = sDate.Date;
-////	uint8_t month = sDate.Month;
-////	uint8_t year = sDate.Year;   // Solo ultimi due digits (00–99)
+	gUnixTimeStamp = rtc_unix_read();
+	if(gUnixTimeStamp<gStartUnixTime)
+	{
+		gStartUnixTime = gUnixTimeStamp;
+	}
+	tTimeElapsed = gUnixTimeStamp - gStartUnixTime;
 
-//	time=rtc_to_tm(&sTime,&sDate);
-	date_read(&time);
-	time_t unix_time = mktime(&time);
-	nSecondsTime = time.tm_hour*3600+(time.tm_min*60)+time.tm_sec;
+	if (tTimeElapsed >= gInterval) {
+		gStartUnixTime += gInterval;
+	}
 
 	if(getBatteryData()->BatteryVoltage == 0) //batteria non presente
 	{
