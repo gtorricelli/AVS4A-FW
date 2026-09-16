@@ -44,6 +44,7 @@
 #include "hailo_task.h"
 #include "rtc_task.h"
 #include "serial_com_task.h"
+#include "radar_task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -248,6 +249,7 @@ static void OS_Task_Init()
 	pir_task_init();
 	cp_uart_init();
 	hailo_task_init();
+	radar_task_init();
 }
 /* USER CODE END 4 */
 

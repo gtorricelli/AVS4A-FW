@@ -1,4 +1,5 @@
 #include "bms.h"
+#include <stdio.h>
 
 const uint8_t bq40z50DeviceAddress  = 0x55;//0x0B;
 

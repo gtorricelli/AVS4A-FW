@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "KedOS.h"
+#include "kedOS.h"
 #include "main.h"
 #include "bsp.h"
 #include "errno.h"
@@ -109,12 +109,12 @@ void shell_task(void)
 {
     int32_t i, opt_idx;
     char *cmd;
-    int8_t *str_command;
+    char *str_command;
 //    int32_t res;
     uint8_t command_valid;
-    int8_t *cmd_opts[MAX_OPTIONS];
+    char *cmd_opts[MAX_OPTIONS];
 
-    memset(cmd_opts, 0, sizeof(int8_t *) * MAX_OPTIONS);
+    memset(cmd_opts, 0, sizeof(cmd_opts));
     command_valid = 0;
 
     if (init == TRUE)
@@ -625,4 +625,3 @@ static int32_t system_on         (char *_opts[])
     setLinuxAlive(nAlive);
 	return 0;
 }
-

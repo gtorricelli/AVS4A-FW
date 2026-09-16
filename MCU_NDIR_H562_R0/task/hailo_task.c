@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 #include "hailo_task.h"
-#include "KedOS.h"
+#include "kedOS.h"
 #include "main.h"
 #include "serial_com_task.h"
 #include "utility.h"
@@ -244,5 +244,4 @@ int isLinuxAlive()
 {
 	return gbLinuxAlive;
 }
-
 

@@ -6,7 +6,7 @@
  */
 #include <sensors_task.h>
 #include <stdio.h>
-#include "KedOS.h"
+#include "kedOS.h"
 #include "main.h"
 #include "sht3x.h"
 #include "string.h"
@@ -216,6 +216,5 @@ static void SensorMainTask()
     }
 
 }
-
 
 

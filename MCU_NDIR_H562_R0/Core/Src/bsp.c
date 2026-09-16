@@ -6,7 +6,7 @@
  */
 
 #include "bsp.h"
-#include "KedOS.h"
+#include "kedOS.h"
 #include "usb.h"
 #include <usbd_cdc_if.h>
 
@@ -176,4 +176,3 @@ void     _delay_ms(uint32_t delay_ms)
 	/* 4 cycles for one loop */
 	while (delay_ms--);
 }
-

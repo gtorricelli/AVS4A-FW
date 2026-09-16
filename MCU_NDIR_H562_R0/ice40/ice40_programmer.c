@@ -4,7 +4,7 @@
  *  Created on: Dec 20, 2024
  *      Author: rfacc
  */
-#include "KedOS.h"
+#include "kedOS.h"
 #include "main.h"
 #include "bsp.h"
 #include "spi.h"

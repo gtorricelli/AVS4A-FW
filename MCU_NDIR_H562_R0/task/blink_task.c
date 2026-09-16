@@ -1,4 +1,4 @@
-#include "KedOS.h"
+#include "kedOS.h"
 #include "main.h"
 #include "iwdg.h"
 /*private function fo Protocol */
@@ -45,4 +45,3 @@ static void BlinkTask()
 //	}
 
 }
-

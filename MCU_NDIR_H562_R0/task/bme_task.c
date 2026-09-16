@@ -6,7 +6,7 @@
  */
 #include <bme_task.h>
 #include <stdio.h>
-#include "KedOS.h"
+#include "kedOS.h"
 #include "main.h"
 #include "sht3x.h"
 
@@ -138,6 +138,5 @@ static void BmeMainTask()
 			break;
 	}
 }
-
 
 

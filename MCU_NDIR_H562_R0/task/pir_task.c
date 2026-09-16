@@ -6,7 +6,7 @@
  */
 #include <bme_task.h>
 #include <stdio.h>
-#include "KedOS.h"
+#include "kedOS.h"
 #include "main.h"
 #include "sht3x.h"
 #include "hailo_task.h"
@@ -149,4 +149,3 @@ uint32_t getMin_PIR_ms()
 {
 	return timeout_event_ms;
 }
-

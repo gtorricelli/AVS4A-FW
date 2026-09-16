@@ -1,0 +1,11 @@
+# STM32CubeIDE generated build products (keep generated makefiles tracked).
+/Debug/**/*.o
+/Debug/**/*.d
+/Debug/**/*.su
+/Debug/**/*.cyclo
+/Debug/*.elf
+/Debug/*.hex
+/Debug/*.bin
+/Debug/*.map
+/Debug/*.list
+/Debug/*.stdout

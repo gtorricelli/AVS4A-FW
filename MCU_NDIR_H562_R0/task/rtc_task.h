@@ -1,7 +1,7 @@
 #ifndef RTC_TASK_H_
 #define RTC_TASK_H_
 
-#include "KedOS.h"
+#include "kedOS.h"
 #include "main.h"
 #include "rtc.h"
 #include "time.h"
