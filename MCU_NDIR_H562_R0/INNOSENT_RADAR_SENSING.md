@@ -1,11 +1,11 @@
-# InnoSenT RadarSensing — IMD-2000 prototype
+# InnoSenT RadarSensing - IMD-2000 / IMD-2002 prototype
 
-This increment connects an IMD-2000 to USART1 and writes one aggregate report
-per second to the existing USB debug console.
+The same USART1 acquisition task supports IMD-2000 and IMD-2002 and writes one
+aggregate report per second to the existing USB debug console.
 
 ## Hardware connection
 
-| IMD-2000 | BD0-0002-000 / STM32H562 | Notes |
+| Radar | BD0-0002-000 / STM32H562 | Notes |
 |---|---|---|
 | UART TX | J6 pin 6 / PB15 (USART1_RX) | 3.3 V TTL |
 | UART RX | J6 pin 5 / PB14 (USART1_TX) | 3.3 V TTL |
@@ -18,48 +18,70 @@ without hardware flow control.
 ## Acquisition flow
 
 After a 200 ms boot delay, the task sends the InnoSenT start command. After a
-valid ACK it requests a target list, validates the 334-byte response and
-immediately requests the next list. A response timeout causes a retry; after
-three timeouts the start handshake is repeated.
+valid ACK it requests a target list and immediately requests the next list after
+a valid response. IMD-2000 responses contain 20 slots of 16 bytes (334-byte
+frame). IMD-2002 responses contain 15 slots of 20 bytes (314-byte frame); the
+fifth float is the incident azimuth angle.
 
-Every accepted response is validated for delimiters, source/destination,
-function code, target count and checksum. The target-list sequence number is
-used to count lost lists.
+Every response is validated for delimiters, addresses, function code, target
+count and checksum. The sequence number counts lost lists. A response timeout
+causes a retry; after three timeouts the start handshake is repeated.
+
+## Sensor and diagnostic selection
+
+Defaults are selected at compile time in `task/radar_task.h`:
+
+```c
+#define RADAR_DEFAULT_SENSOR INNOSENT_SENSOR_IMD2000
+#define RADAR_DIAGNOSTIC_RAW_DEFAULT 0
+```
+
+The debug shell permits runtime selection:
+
+```text
+radar                 # current configuration
+radar imd2000         # select IMD-2000 and restart acquisition
+radar imd2002         # select IMD-2002 and restart acquisition
+radar raw on          # print every decoded target tuple
+radar raw off         # aggregate output only
+```
+
+Raw records contain list ID, target index, range, velocity, signal and ETA.
+IMD-2002 records also contain `angle_deg`. Raw mode can produce a high console
+data rate and should be enabled only while collecting diagnostic logs.
 
 ## One-second report
 
-Targets from all valid lists in the window are grouped in range/velocity space.
-The provisional compile-time parameters are in `task/radar_task.h`:
+Targets from all valid lists are grouped in range/velocity space. Provisional
+parameters in `task/radar_task.h` are:
 
 - `MIN_CLUSTER_POINTS` (default 4 total points/window)
 - `RADAR_CLUSTER_RANGE_EPSILON_M` (default 0.50 m)
 - `RADAR_CLUSTER_VELOCITY_EPSILON_MPS` (default 0.75 m/s)
+- `RADAR_CLUSTER_ANGLE_EPSILON_DEG` (default 15 degrees for IMD-2002)
 
-Clusters are printed in descending order by total point count. Example:
+Example:
 
 ```text
-RADAR sensor=IMD2000 window_ms=1000 frames=10 lost=0 invalid=0 uart_errors=0 rx_overruns=0 clusters=1 min_points=4
+RADAR sensor=IMD2000 raw=0 window_ms=1000 frames=10 lost=0 invalid=0 uart_errors=0 rx_overruns=0 clusters=1 min_points=4
 CLUSTER id=0 points_mean=2.40 range_mean_m=3.812 range_sd_m=0.064 velocity_mean_mps=-0.310 frames_seen=10 total_points=24
 ```
 
-`points_mean` is the cluster point count divided by every valid observation in
-the window. `range_mean_m` is the mean of the per-observation range centroids;
-`range_sd_m` is their sample standard deviation. `velocity_mean_mps` is the
-mean of the per-observation velocity centroids. Observations where a cluster is
-absent affect `points_mean`, but not its centroid statistics.
+For IMD-2002, a `CLUSTER_ANGLE` line follows each cluster and reports the mean
+and sample standard deviation of the per-observation angular centroids.
 
-The thresholds are intentionally initial bench values. Preserve the raw report
-logs during the field test so they can be calibrated before adding IMD-2002
-angle processing.
+`points_mean` is the cluster point count divided by every valid observation in
+the window. Range, velocity and angle statistics are calculated from the
+per-observation centroids where that cluster is present.
+
+Thresholds are initial bench values. Preserve raw field logs before defining
+production thresholds.
 
 ## Host-side module tests
-
-The pure protocol and clustering modules can be checked without STM32 tools:
 
 ```sh
 cd MCU_NDIR_H562_R0/tests
 make test
 ```
 
-The final target build must be regenerated and compiled with STM32CubeIDE so
-the new files under `task/` are added to the managed build.
+Regenerate and compile the final target build with STM32CubeIDE.

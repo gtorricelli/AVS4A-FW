@@ -2,6 +2,7 @@
 #define RADAR_CLUSTER_H
 
 #include <stddef.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 #define RADAR_CLUSTER_MAX_SAMPLES 256U
@@ -12,6 +13,8 @@ typedef struct
 {
     float range_m;
     float velocity_mps;
+    float angle_deg;
+    bool angle_valid;
     uint8_t frame_index;
 } radar_sample_t;
 
@@ -23,6 +26,9 @@ typedef struct
     float mean_centroid_range_m;
     float centroid_range_std_m;
     float mean_velocity_mps;
+    float mean_angle_deg;
+    float angle_std_deg;
+    bool angle_valid;
 } radar_cluster_result_t;
 
 size_t radar_cluster_analyze(const radar_sample_t *samples,
@@ -31,6 +37,7 @@ size_t radar_cluster_analyze(const radar_sample_t *samples,
                              uint16_t min_cluster_points,
                              float range_epsilon_m,
                              float velocity_epsilon_mps,
+                             float angle_epsilon_deg,
                              radar_cluster_result_t *results,
                              size_t result_capacity);
 

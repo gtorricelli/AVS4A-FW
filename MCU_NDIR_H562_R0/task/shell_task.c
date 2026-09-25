@@ -14,6 +14,7 @@
 #include "time.h"
 #include "hailo_task.h"
 #include "serial_com_task.h"
+#include "radar_task.h"
 
 
 #define ENOERR           0
@@ -56,6 +57,7 @@ static int32_t system_date       (char *_opts[]);
 static int32_t ping              (char *_opts[]);
 static int32_t halt              (char *_opts[]);
 static int32_t system_on         (char *_opts[]);
+static int32_t radar_config      (char *_opts[]);
 
 
 static shell_command_st commands[] =
@@ -79,6 +81,7 @@ static shell_command_st commands[] =
     {"on","                   Force Linux On"               , NULL, system_on, {NULL}},
     {"ping","                 send ping to app"             , NULL, ping, {NULL}},
     {"halt","                 send halt to Linux"           , NULL, halt, {NULL}},
+    {"radar","                radar status/configuration"   , "radar [imd2000|imd2002|raw on|raw off]", radar_config, {NULL}},
 };                                                                  /**< Commands array */
 
 /* API functions */
@@ -509,6 +512,51 @@ static int32_t fwVersione         (char *_opts[])
 	printf("sw Versione 5\r\n");
     return 0;
 }
+
+static int32_t radar_config(char *_opts[])
+{
+    if (_opts[0] == NULL)
+    {
+        printf("Radar sensor=%s raw=%s\r\n",
+               innosent_sensor_name(radar_task_get_sensor()),
+               radar_task_get_raw_diagnostic() ? "on" : "off");
+        return ENOERR;
+    }
+
+    if (strcmp(_opts[0], "imd2000") == 0)
+    {
+        (void)radar_task_select_sensor(INNOSENT_SENSOR_IMD2000);
+    }
+    else if (strcmp(_opts[0], "imd2002") == 0)
+    {
+        (void)radar_task_select_sensor(INNOSENT_SENSOR_IMD2002);
+    }
+    else if ((strcmp(_opts[0], "raw") == 0) && (_opts[1] != NULL))
+    {
+        if (strcmp(_opts[1], "on") == 0)
+        {
+            radar_task_set_raw_diagnostic(true);
+        }
+        else if (strcmp(_opts[1], "off") == 0)
+        {
+            radar_task_set_raw_diagnostic(false);
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    else
+    {
+        return -1;
+    }
+
+    printf("Radar sensor=%s raw=%s\r\n",
+           innosent_sensor_name(radar_task_get_sensor()),
+           radar_task_get_raw_diagnostic() ? "on" : "off");
+    return ENOERR;
+}
+
 static uint32_t shellFuncTime = 0;
 
 void * pir_measure()

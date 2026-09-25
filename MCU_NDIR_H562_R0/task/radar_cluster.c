@@ -32,10 +32,13 @@ static float sqrt_newton(float value)
 static bool samples_are_neighbours(const radar_sample_t *a,
                                    const radar_sample_t *b,
                                    float range_epsilon_m,
-                                   float velocity_epsilon_mps)
+                                   float velocity_epsilon_mps,
+                                   float angle_epsilon_deg)
 {
     return (abs_float(a->range_m - b->range_m) <= range_epsilon_m) &&
-           (abs_float(a->velocity_mps - b->velocity_mps) <= velocity_epsilon_mps);
+           (abs_float(a->velocity_mps - b->velocity_mps) <= velocity_epsilon_mps) &&
+           ((!a->angle_valid) || (!b->angle_valid) ||
+            (abs_float(a->angle_deg - b->angle_deg) <= angle_epsilon_deg));
 }
 
 static radar_cluster_result_t summarize_component(const radar_sample_t *samples,
@@ -45,9 +48,13 @@ static radar_cluster_result_t summarize_component(const radar_sample_t *samples,
 {
     float range_sum[RADAR_CLUSTER_MAX_FRAMES] = {0.0f};
     float velocity_sum[RADAR_CLUSTER_MAX_FRAMES] = {0.0f};
+    float angle_sum[RADAR_CLUSTER_MAX_FRAMES] = {0.0f};
     uint16_t points_per_frame[RADAR_CLUSTER_MAX_FRAMES] = {0U};
-    radar_cluster_result_t result = {0U, 0U, 0.0f, 0.0f, 0.0f, 0.0f};
+    uint16_t angles_per_frame[RADAR_CLUSTER_MAX_FRAMES] = {0U};
+    radar_cluster_result_t result = {0};
     float squared_error_sum = 0.0f;
+    float angle_squared_error_sum = 0.0f;
+    uint16_t angle_frames_seen = 0U;
     uint8_t frame;
     size_t i;
 
@@ -59,6 +66,11 @@ static radar_cluster_result_t summarize_component(const radar_sample_t *samples,
             range_sum[sample->frame_index] += sample->range_m;
             velocity_sum[sample->frame_index] += sample->velocity_mps;
             ++points_per_frame[sample->frame_index];
+            if (sample->angle_valid)
+            {
+                angle_sum[sample->frame_index] += sample->angle_deg;
+                ++angles_per_frame[sample->frame_index];
+            }
         }
     }
 
@@ -72,6 +84,11 @@ static radar_cluster_result_t summarize_component(const radar_sample_t *samples,
             result.mean_centroid_range_m += range_sum[frame] / (float)points_per_frame[frame];
             result.mean_velocity_mps += velocity_sum[frame] / (float)points_per_frame[frame];
             ++result.frames_seen;
+            if (angles_per_frame[frame] > 0U)
+            {
+                result.mean_angle_deg += angle_sum[frame] / (float)angles_per_frame[frame];
+                ++angle_frames_seen;
+            }
         }
     }
 
@@ -79,6 +96,11 @@ static radar_cluster_result_t summarize_component(const radar_sample_t *samples,
     {
         result.mean_centroid_range_m /= (float)result.frames_seen;
         result.mean_velocity_mps /= (float)result.frames_seen;
+    }
+    if (angle_frames_seen > 0U)
+    {
+        result.mean_angle_deg /= (float)angle_frames_seen;
+        result.angle_valid = true;
     }
 
     if (result.frames_seen > 1U)
@@ -94,6 +116,21 @@ static radar_cluster_result_t summarize_component(const radar_sample_t *samples,
         }
         result.centroid_range_std_m =
             sqrt_newton(squared_error_sum / (float)(result.frames_seen - 1U));
+    }
+
+    if (angle_frames_seen > 1U)
+    {
+        for (frame = 0U; (frame < frame_count) && (frame < RADAR_CLUSTER_MAX_FRAMES); ++frame)
+        {
+            if (angles_per_frame[frame] > 0U)
+            {
+                const float centroid = angle_sum[frame] / (float)angles_per_frame[frame];
+                const float error = centroid - result.mean_angle_deg;
+                angle_squared_error_sum += error * error;
+            }
+        }
+        result.angle_std_deg =
+            sqrt_newton(angle_squared_error_sum / (float)(angle_frames_seen - 1U));
     }
 
     return result;
@@ -142,6 +179,7 @@ size_t radar_cluster_analyze(const radar_sample_t *samples,
                              uint16_t min_cluster_points,
                              float range_epsilon_m,
                              float velocity_epsilon_mps,
+                             float angle_epsilon_deg,
                              radar_cluster_result_t *results,
                              size_t result_capacity)
 {
@@ -185,7 +223,8 @@ size_t radar_cluster_analyze(const radar_sample_t *samples,
             {
                 if ((visited[candidate] == 0U) &&
                     samples_are_neighbours(&samples[current], &samples[candidate],
-                                           range_epsilon_m, velocity_epsilon_mps))
+                                           range_epsilon_m, velocity_epsilon_mps,
+                                           angle_epsilon_deg))
                 {
                     visited[candidate] = 1U;
                     queue[queue_write++] = (uint16_t)candidate;

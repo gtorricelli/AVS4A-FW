@@ -29,7 +29,7 @@ typedef enum
 
 typedef struct
 {
-    uint8_t data[INNOSENT_IMD2000_TARGET_FRAME_SIZE];
+    uint8_t data[INNOSENT_MAX_FRAME_SIZE];
     size_t length;
     size_t expected_length;
     uint32_t last_byte_ms;
@@ -54,6 +54,8 @@ static uint32_t invalid_frames_window;
 static radar_sample_t window_samples[RADAR_CLUSTER_MAX_SAMPLES];
 static size_t window_sample_count;
 static uint8_t window_frame_count;
+static innosent_sensor_t active_sensor = RADAR_DEFAULT_SENSOR;
+static bool raw_diagnostic_enabled = (RADAR_DIAGNOSTIC_RAW_DEFAULT != 0);
 
 static void parser_reset(void)
 {
@@ -92,7 +94,7 @@ static void request_target_list(uint32_t now)
     state_started_ms = now;
 }
 
-static bool target_is_usable(const innosent_imd2000_target_t *target)
+static bool target_is_usable(const innosent_target_t *target)
 {
     return (target->range_m >= RADAR_MIN_RANGE_M) &&
            (target->range_m <= RADAR_MAX_RANGE_M) &&
@@ -100,7 +102,39 @@ static bool target_is_usable(const innosent_imd2000_target_t *target)
            (target->velocity_mps <= RADAR_MAX_ABS_VELOCITY_MPS);
 }
 
-static void collect_target_list(const innosent_imd2000_target_list_t *list)
+static void print_raw_target_list(const innosent_target_list_t *list)
+{
+    uint16_t i;
+
+    if (!raw_diagnostic_enabled)
+    {
+        return;
+    }
+
+    for (i = 0U; i < list->target_count; ++i)
+    {
+        const innosent_target_t *target = &list->targets[i];
+        if (target->angle_valid)
+        {
+            printf("RADAR_RAW sensor=%s list=%u target=%u range_m=%.3f velocity_mps=%.3f "
+                   "signal_db=%.2f eta_s=%.3f angle_deg=%.2f\r\n",
+                   innosent_sensor_name(active_sensor), (unsigned int)list->target_list_id,
+                   (unsigned int)i, (double)target->range_m, (double)target->velocity_mps,
+                   (double)target->signal_db, (double)target->eta_s,
+                   (double)target->incident_angle_deg);
+        }
+        else
+        {
+            printf("RADAR_RAW sensor=%s list=%u target=%u range_m=%.3f velocity_mps=%.3f "
+                   "signal_db=%.2f eta_s=%.3f\r\n",
+                   innosent_sensor_name(active_sensor), (unsigned int)list->target_list_id,
+                   (unsigned int)i, (double)target->range_m, (double)target->velocity_mps,
+                   (double)target->signal_db, (double)target->eta_s);
+        }
+    }
+}
+
+static void collect_target_list(const innosent_target_list_t *list)
 {
     uint16_t i;
 
@@ -128,6 +162,8 @@ static void collect_target_list(const innosent_imd2000_target_list_t *list)
             radar_sample_t *sample = &window_samples[window_sample_count++];
             sample->range_m = list->targets[i].range_m;
             sample->velocity_mps = list->targets[i].velocity_mps;
+            sample->angle_deg = list->targets[i].incident_angle_deg;
+            sample->angle_valid = list->targets[i].angle_valid;
             sample->frame_index = window_frame_count;
         }
     }
@@ -144,13 +180,15 @@ static void process_complete_frame(const uint8_t *frame, size_t size, uint32_t n
     }
     else if (frame[0] == 0xA2U)
     {
-        innosent_imd2000_target_list_t list;
+        innosent_target_list_t list;
 
-        if (innosent_decode_imd2000_targets(frame, size, &list))
+        if (innosent_decode_targets(active_sensor, frame, size, &list))
         {
             retry_count = 0U;
-            collect_target_list(&list);
+            /* IMD-2002 requires the next request shortly after the current list. */
             request_target_list(now);
+            print_raw_target_list(&list);
+            collect_target_list(&list);
         }
         else
         {
@@ -174,7 +212,7 @@ static void parser_consume(uint8_t byte, uint32_t now)
         {
             return;
         }
-        parser.expected_length = (byte == 0xA2U) ? INNOSENT_IMD2000_TARGET_FRAME_SIZE : 0U;
+        parser.expected_length = (byte == 0xA2U) ? innosent_target_frame_size(active_sensor) : 0U;
     }
 
     parser.data[parser.length++] = byte;
@@ -184,7 +222,7 @@ static void parser_consume(uint8_t byte, uint32_t now)
     {
         parser.expected_length = (size_t)parser.data[1] + 6U;
         if ((parser.expected_length < 9U) ||
-            (parser.expected_length > INNOSENT_IMD2000_TARGET_FRAME_SIZE))
+            (parser.expected_length > INNOSENT_MAX_FRAME_SIZE))
         {
             parser_reset();
             ++invalid_frames_window;
@@ -210,12 +248,14 @@ static void print_window_report(uint32_t elapsed_ms)
     const size_t cluster_count =
         radar_cluster_analyze(window_samples, window_sample_count, window_frame_count,
                               MIN_CLUSTER_POINTS, RADAR_CLUSTER_RANGE_EPSILON_M,
-                              RADAR_CLUSTER_VELOCITY_EPSILON_MPS, clusters,
+                              RADAR_CLUSTER_VELOCITY_EPSILON_MPS,
+                              RADAR_CLUSTER_ANGLE_EPSILON_DEG, clusters,
                               RADAR_CLUSTER_MAX_RESULTS);
     size_t i;
 
-    printf("RADAR sensor=IMD2000 window_ms=%lu frames=%u lost=%lu invalid=%lu "
+    printf("RADAR sensor=%s raw=%u window_ms=%lu frames=%u lost=%lu invalid=%lu "
            "uart_errors=%lu rx_overruns=%lu clusters=%u min_points=%u\r\n",
+           innosent_sensor_name(active_sensor), raw_diagnostic_enabled ? 1U : 0U,
            (unsigned long)elapsed_ms, (unsigned int)window_frame_count,
            (unsigned long)lost_lists_window, (unsigned long)invalid_frames_window,
            (unsigned long)uart_errors, (unsigned long)rx_overruns,
@@ -231,6 +271,12 @@ static void print_window_report(uint32_t elapsed_ms)
                (double)clusters[i].mean_velocity_mps,
                (unsigned int)clusters[i].frames_seen,
                (unsigned int)clusters[i].total_points);
+        if (clusters[i].angle_valid)
+        {
+            printf("CLUSTER_ANGLE id=%u angle_mean_deg=%.2f angle_sd_deg=%.2f\r\n",
+                   (unsigned int)i, (double)clusters[i].mean_angle_deg,
+                   (double)clusters[i].angle_std_deg);
+        }
     }
 
     window_sample_count = 0U;
@@ -260,6 +306,43 @@ void radar_task_init(void)
 
     (void)HAL_UART_Receive_IT(&huart1, &rx_byte, 1U);
     add_mainloop_funct(radar_task, "Radar", 0U, NO_CRITICAL_TASK);
+}
+
+bool radar_task_select_sensor(innosent_sensor_t sensor)
+{
+    if ((sensor != INNOSENT_SENSOR_IMD2000) && (sensor != INNOSENT_SENSOR_IMD2002))
+    {
+        return false;
+    }
+
+    active_sensor = sensor;
+    parser_reset();
+    rx_tail = rx_head;
+    have_last_list_id = false;
+    window_sample_count = 0U;
+    window_frame_count = 0U;
+    lost_lists_window = 0U;
+    invalid_frames_window = 0U;
+    retry_count = 0U;
+    radar_state = RADAR_STATE_BOOT_DELAY;
+    state_started_ms = get_clock_ms();
+    window_started_ms = state_started_ms;
+    return true;
+}
+
+innosent_sensor_t radar_task_get_sensor(void)
+{
+    return active_sensor;
+}
+
+void radar_task_set_raw_diagnostic(bool enabled)
+{
+    raw_diagnostic_enabled = enabled;
+}
+
+bool radar_task_get_raw_diagnostic(void)
+{
+    return raw_diagnostic_enabled;
 }
 
 void radar_task(void)
