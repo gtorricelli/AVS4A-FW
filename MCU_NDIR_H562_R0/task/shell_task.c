@@ -109,12 +109,12 @@ void shell_task(void)
 {
     int32_t i, opt_idx;
     char *cmd;
-    int8_t *str_command;
+    char *str_command;
 //    int32_t res;
     uint8_t command_valid;
-    int8_t *cmd_opts[MAX_OPTIONS];
+    char *cmd_opts[MAX_OPTIONS];
 
-    memset(cmd_opts, 0, sizeof(int8_t *) * MAX_OPTIONS);
+    memset(cmd_opts, 0, sizeof(cmd_opts));
     command_valid = 0;
 
     if (init == TRUE)
@@ -518,7 +518,7 @@ void * pir_measure()
 	char ChValue;
 	if(time_elapsed_ms(shellFuncTime, 100)==0) return 0;
 	shellFuncTime = get_clock_ms();
-    printf(CLS CURPOS(0,0) ATTR_FRED "\r\PIR MEASURE \r\n" );
+    printf(CLS CURPOS(0,0) ATTR_FRED "\rPIR MEASURE \r\n" );
     printf(ATTR_FGREEN);
 
     printf("P[0]:%d P[1]:%d P[2]:%d P[3]:%d \r\n",

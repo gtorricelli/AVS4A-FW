@@ -1,4 +1,5 @@
 #include "bms.h"
+#include <stdio.h>
 
 const uint8_t bq40z50DeviceAddress  = 0x55;//0x0B;
 
@@ -47,6 +48,7 @@ int dumpe_register()
 		registerValue = readRegister(i<<1);
 		printf("Batt %.3d: %.4x \n\r",i,registerValue);
 	}
+	return 0;
 }
 uint8_t  readRegister(uint8_t addr)
 {
