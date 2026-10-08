@@ -29,6 +29,8 @@ int     setLinuxAlive(uint8_t enable);
 void    setPirEvent(int id);
 uint8_t isPirevent();
 void    resetPirEvent();
+void    setPirDiagnosticStream(uint8_t enable);
+uint8_t getPirDiagnosticStream(void);
 
 
 

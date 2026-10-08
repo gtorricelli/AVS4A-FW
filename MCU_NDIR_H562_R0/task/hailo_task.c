@@ -28,6 +28,7 @@ static uint8_t  gbLinuxAlive=0;
 static uint8_t  g_u8LinuxReadyFlag = 0;
 static uint8_t  g_DisableTask = 0;
 static uint8_t  l_bpirEvent=0;
+static uint8_t  g_PirDiagnosticStream=0;
 
 #define ALIVE_DEFAULT 0 //@ked
 
@@ -52,6 +53,7 @@ void hailo_task_init()
 	gbHailoRequest= 1;
 	nTimeOut      = 10;
 	g_DisableTask = 0;
+	g_PirDiagnosticStream = 0;
 	//time critical function
 	add_cyclical_funct(Hailo_syncTask, 1000, "Hailo_sync\0",CRITICAL_TASK);
 	add_mainloop_funct(Hailo_elab_task, "Hailo_state\0", 1, 0);
@@ -215,8 +217,21 @@ uint8_t isRtcFlagActive()
 
 void setPirEvent(int id)
 {
-	outterm_printf("PIR event=%d\r\n", id);
+	if (g_PirDiagnosticStream != 0U)
+	{
+		outterm_printf("PIR event=%d\r\n", id);
+	}
 	l_bpirEvent=1;
+}
+
+void setPirDiagnosticStream(uint8_t enable)
+{
+	g_PirDiagnosticStream = (enable != 0U) ? 1U : 0U;
+}
+
+uint8_t getPirDiagnosticStream(void)
+{
+	return g_PirDiagnosticStream;
 }
 
 void resetPirEvent()

@@ -14,6 +14,10 @@
 #define RADAR_DIAGNOSTIC_RAW_DEFAULT 0
 #endif
 
+#ifndef RADAR_STREAM_DEFAULT
+#define RADAR_STREAM_DEFAULT 0
+#endif
+
 /* Provisional bench defaults. Tune these after collecting field logs. */
 #ifndef MIN_CLUSTER_POINTS
 #define MIN_CLUSTER_POINTS              4U
@@ -37,5 +41,7 @@ bool radar_task_select_sensor(innosent_sensor_t sensor);
 innosent_sensor_t radar_task_get_sensor(void);
 void radar_task_set_raw_diagnostic(bool enabled);
 bool radar_task_get_raw_diagnostic(void);
+void radar_task_set_stream_enabled(bool enabled);
+bool radar_task_get_stream_enabled(void);
 
 #endif /* RADAR_TASK_H */

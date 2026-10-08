@@ -57,6 +57,15 @@ static size_t window_sample_count;
 static uint8_t window_frame_count;
 static innosent_sensor_t active_sensor = RADAR_DEFAULT_SENSOR;
 static bool raw_diagnostic_enabled = (RADAR_DIAGNOSTIC_RAW_DEFAULT != 0);
+static bool stream_enabled = (RADAR_STREAM_DEFAULT != 0);
+
+static void reset_report_window(void)
+{
+    window_sample_count = 0U;
+    window_frame_count = 0U;
+    lost_lists_window = 0U;
+    invalid_frames_window = 0U;
+}
 
 static void parser_reset(void)
 {
@@ -107,7 +116,7 @@ static void print_raw_target_list(const innosent_target_list_t *list)
 {
     uint16_t i;
 
-    if (!raw_diagnostic_enabled)
+    if (!stream_enabled || !raw_diagnostic_enabled)
     {
         return;
     }
@@ -280,10 +289,7 @@ static void print_window_report(uint32_t elapsed_ms)
         }
     }
 
-    window_sample_count = 0U;
-    window_frame_count = 0U;
-    lost_lists_window = 0U;
-    invalid_frames_window = 0U;
+    reset_report_window();
 }
 
 void radar_task_init(void)
@@ -346,6 +352,18 @@ bool radar_task_get_raw_diagnostic(void)
     return raw_diagnostic_enabled;
 }
 
+void radar_task_set_stream_enabled(bool enabled)
+{
+    stream_enabled = enabled;
+    reset_report_window();
+    window_started_ms = get_clock_ms();
+}
+
+bool radar_task_get_stream_enabled(void)
+{
+    return stream_enabled;
+}
+
 void radar_task(void)
 {
     uint8_t byte;
@@ -382,7 +400,14 @@ void radar_task(void)
 
     if ((uint32_t)(now - window_started_ms) >= RADAR_REPORT_PERIOD_MS)
     {
-        print_window_report((uint32_t)(now - window_started_ms));
+        if (stream_enabled)
+        {
+            print_window_report((uint32_t)(now - window_started_ms));
+        }
+        else
+        {
+            reset_report_window();
+        }
         window_started_ms = now;
     }
 }

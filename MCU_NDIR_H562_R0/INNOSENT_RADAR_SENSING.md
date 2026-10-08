@@ -1,7 +1,9 @@
 # InnoSenT RadarSensing - IMD-2000 / IMD-2002 prototype
 
-The same USART1 acquisition task supports IMD-2000 and IMD-2002 and writes one
-aggregate report per second to the dedicated USB service port (`CDC_SERIAL2`).
+The same USART1 acquisition task supports IMD-2000 and IMD-2002. Acquisition
+starts automatically, while diagnostic output is disabled by default. When
+enabled, it writes one aggregate report per second to the dedicated USB service
+port (`CDC_SERIAL2`).
 The interactive shell remains on `CDC_SERIAL1`, so unsolicited radar and PIR
 telemetry cannot interfere with commands or command responses.
 
@@ -43,6 +45,7 @@ Defaults are selected at compile time in `task/radar_task.h`:
 
 ```c
 #define RADAR_DEFAULT_SENSOR INNOSENT_SENSOR_IMD2000
+#define RADAR_STREAM_DEFAULT 0
 #define RADAR_DIAGNOSTIC_RAW_DEFAULT 0
 ```
 
@@ -52,17 +55,24 @@ The debug shell permits runtime selection:
 radar                 # current configuration
 radar imd2000         # select IMD-2000 and restart acquisition
 radar imd2002         # select IMD-2002 and restart acquisition
+radar stream on       # enable aggregate reports on service CDC2
+radar stream off      # disable all radar output, acquisition remains active
 radar raw on          # send every decoded target tuple to service CDC2
-radar raw off         # aggregate output only
+radar raw off         # suppress raw tuples, retain aggregate reports
+pir                    # current inputs and PIR stream state
+pir stream on          # enable event notifications on service CDC2
+pir stream off         # disable event notifications, detection remains active
 ```
 
 Raw records contain list ID, target index, range, velocity, signal and ETA.
 IMD-2002 records also contain `angle_deg`. Raw mode can produce a high service
 port data rate and should be enabled only while collecting diagnostic logs.
 
-The `pir` shell command performs one immediate reading and returns to the
-prompt. Automatic `PIR event=n` notifications are sent only to the service
-port.
+The radar acquisition and PIR event processing remain active regardless of
+their stream settings. At boot both streams are off, so `CDC_SERIAL2` remains
+silent. The `pir` shell command performs one immediate reading and returns to
+the prompt. When enabled, automatic `PIR event=n` notifications are sent only
+to the service port.
 
 ## One-second report
 

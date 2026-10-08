@@ -73,7 +73,7 @@ static shell_command_st commands[] =
     {"batt","                 battery data"                 , NULL, battery, {NULL}},
     {"sens","                 sensor data"                  , NULL, sensor, {NULL}},
 	{"debms","                IN PIR debounce"              , NULL, setMinPIRms, {NULL}},
-	{"pir","                  read current PIR inputs"       , NULL, pir, {NULL}},
+	{"pir","                  PIR status/diagnostic stream"  , "pir [stream on|stream off]", pir, {NULL}},
 	{"tim4PIR","              IN PIR time before signal"    , NULL, setMinPIRsg, {NULL}},
     {"date","                 Set/Get rtc time"             , NULL, system_date, {NULL}},
 	{"fw","                   FIRMWARE UPGRADE"             , NULL, fwupgrade, {NULL}},
@@ -81,7 +81,7 @@ static shell_command_st commands[] =
     {"on","                   Force Linux On"               , NULL, system_on, {NULL}},
     {"ping","                 send ping to app"             , NULL, ping, {NULL}},
     {"halt","                 send halt to Linux"           , NULL, halt, {NULL}},
-    {"radar","                radar status/configuration"   , "radar [imd2000|imd2002|raw on|raw off]", radar_config, {NULL}},
+    {"radar","                radar status/configuration"   , "radar [imd2000|imd2002|stream on|stream off|raw on|raw off]", radar_config, {NULL}},
 };                                                                  /**< Commands array */
 
 /* API functions */
@@ -517,8 +517,9 @@ static int32_t radar_config(char *_opts[])
 {
     if (_opts[0] == NULL)
     {
-        printf("Radar sensor=%s raw=%s\r\n",
+        printf("Radar sensor=%s stream=%s raw=%s\r\n",
                innosent_sensor_name(radar_task_get_sensor()),
+               radar_task_get_stream_enabled() ? "on" : "off",
                radar_task_get_raw_diagnostic() ? "on" : "off");
         return ENOERR;
     }
@@ -530,6 +531,21 @@ static int32_t radar_config(char *_opts[])
     else if (strcmp(_opts[0], "imd2002") == 0)
     {
         (void)radar_task_select_sensor(INNOSENT_SENSOR_IMD2002);
+    }
+    else if ((strcmp(_opts[0], "stream") == 0) && (_opts[1] != NULL))
+    {
+        if (strcmp(_opts[1], "on") == 0)
+        {
+            radar_task_set_stream_enabled(true);
+        }
+        else if (strcmp(_opts[1], "off") == 0)
+        {
+            radar_task_set_stream_enabled(false);
+        }
+        else
+        {
+            return -1;
+        }
     }
     else if ((strcmp(_opts[0], "raw") == 0) && (_opts[1] != NULL))
     {
@@ -551,20 +567,45 @@ static int32_t radar_config(char *_opts[])
         return -1;
     }
 
-    printf("Radar sensor=%s raw=%s\r\n",
+    printf("Radar sensor=%s stream=%s raw=%s\r\n",
            innosent_sensor_name(radar_task_get_sensor()),
+           radar_task_get_stream_enabled() ? "on" : "off",
            radar_task_get_raw_diagnostic() ? "on" : "off");
     return ENOERR;
 }
 
 static int32_t pir               (char *_opts[])
 {
-	(void)_opts;
-	printf("PIR P0=%u P1=%u P2=%u P3=%u (events: service CDC2)\r\n",
+	if (_opts[0] == NULL)
+	{
+		printf("PIR stream=%s P0=%u P1=%u P2=%u P3=%u\r\n",
+				getPirDiagnosticStream() ? "on" : "off",
 			(unsigned int)getPirvalue(0),
 			(unsigned int)getPirvalue(1),
 			(unsigned int)getPirvalue(2),
 			(unsigned int)getPirvalue(3));
+		return ENOERR;
+	}
+
+	if ((strcmp(_opts[0], "stream") != 0) || (_opts[1] == NULL))
+	{
+		return -1;
+	}
+
+	if (strcmp(_opts[1], "on") == 0)
+	{
+		setPirDiagnosticStream(1U);
+	}
+	else if (strcmp(_opts[1], "off") == 0)
+	{
+		setPirDiagnosticStream(0U);
+	}
+	else
+	{
+		return -1;
+	}
+
+	printf("PIR stream=%s\r\n", getPirDiagnosticStream() ? "on" : "off");
 	return ENOERR;
 }
 
