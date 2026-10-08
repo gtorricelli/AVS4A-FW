@@ -215,10 +215,7 @@ uint8_t isRtcFlagActive()
 
 void setPirEvent(int id)
 {
-	char string[256];
-	memset(string,0,256);
-	sprintf(string,"Pir Event[%d]\r\n",id);
-	outterm_send((uint8_t*)string,strlen(string));
+	outterm_printf("PIR event=%d\r\n", id);
 	l_bpirEvent=1;
 }
 

@@ -1,4 +1,5 @@
 #include "stdio.h"
+#include <stdarg.h>
 #include "string.h"
 #include "kedOS.h"
 #include "serial_com_task.h"
@@ -47,6 +48,8 @@ MessagePacket_t gRxMessage;
 MessagePacket_t gTxMessage;
 static stSensorData gSensorData;
 
+#define OUTTERM_PRINTF_BUFFER_SIZE 384U
+
 
 static void cp_uart_task(void);
 static void cp_uart_timer_task(void);
@@ -54,6 +57,28 @@ static void cp_uart_timer_task(void);
 uint16_t outterm_send(uint8_t * buff, uint16_t len)
 {
 	return CDC_Transmit_Buffered(buff, len,CDC_SERIAL2);
+}
+
+uint16_t outterm_printf(const char *format, ...)
+{
+	static char buffer[OUTTERM_PRINTF_BUFFER_SIZE];
+	va_list args;
+	int length;
+	uint16_t send_length;
+
+	va_start(args, format);
+	length = vsnprintf(buffer, sizeof(buffer), format, args);
+	va_end(args);
+
+	if (length <= 0)
+	{
+		return 0U;
+	}
+
+	send_length = (length < (int)sizeof(buffer))
+			? (uint16_t)length
+			: (uint16_t)(sizeof(buffer) - 1U);
+	return outterm_send((uint8_t *)buffer, send_length);
 }
 
 uint16_t sp_uart_send(uint8_t * buff, uint16_t len)

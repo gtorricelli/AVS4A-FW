@@ -8,6 +8,7 @@
 #include "kedOS.h"
 #include "main.h"
 #include "radar_cluster.h"
+#include "serial_com_task.h"
 #include "usart.h"
 
 #define RADAR_RX_RING_SIZE           1024U
@@ -116,20 +117,20 @@ static void print_raw_target_list(const innosent_target_list_t *list)
         const innosent_target_t *target = &list->targets[i];
         if (target->angle_valid)
         {
-            printf("RADAR_RAW sensor=%s list=%u target=%u range_m=%.3f velocity_mps=%.3f "
-                   "signal_db=%.2f eta_s=%.3f angle_deg=%.2f\r\n",
-                   innosent_sensor_name(active_sensor), (unsigned int)list->target_list_id,
-                   (unsigned int)i, (double)target->range_m, (double)target->velocity_mps,
-                   (double)target->signal_db, (double)target->eta_s,
-                   (double)target->incident_angle_deg);
+            outterm_printf("RADAR_RAW sensor=%s list=%u target=%u range_m=%.3f velocity_mps=%.3f "
+                           "signal_db=%.2f eta_s=%.3f angle_deg=%.2f\r\n",
+                           innosent_sensor_name(active_sensor), (unsigned int)list->target_list_id,
+                           (unsigned int)i, (double)target->range_m, (double)target->velocity_mps,
+                           (double)target->signal_db, (double)target->eta_s,
+                           (double)target->incident_angle_deg);
         }
         else
         {
-            printf("RADAR_RAW sensor=%s list=%u target=%u range_m=%.3f velocity_mps=%.3f "
-                   "signal_db=%.2f eta_s=%.3f\r\n",
-                   innosent_sensor_name(active_sensor), (unsigned int)list->target_list_id,
-                   (unsigned int)i, (double)target->range_m, (double)target->velocity_mps,
-                   (double)target->signal_db, (double)target->eta_s);
+            outterm_printf("RADAR_RAW sensor=%s list=%u target=%u range_m=%.3f velocity_mps=%.3f "
+                           "signal_db=%.2f eta_s=%.3f\r\n",
+                           innosent_sensor_name(active_sensor), (unsigned int)list->target_list_id,
+                           (unsigned int)i, (double)target->range_m, (double)target->velocity_mps,
+                           (double)target->signal_db, (double)target->eta_s);
         }
     }
 }
@@ -253,29 +254,29 @@ static void print_window_report(uint32_t elapsed_ms)
                               RADAR_CLUSTER_MAX_RESULTS);
     size_t i;
 
-    printf("RADAR sensor=%s raw=%u window_ms=%lu frames=%u lost=%lu invalid=%lu "
-           "uart_errors=%lu rx_overruns=%lu clusters=%u min_points=%u\r\n",
-           innosent_sensor_name(active_sensor), raw_diagnostic_enabled ? 1U : 0U,
-           (unsigned long)elapsed_ms, (unsigned int)window_frame_count,
-           (unsigned long)lost_lists_window, (unsigned long)invalid_frames_window,
-           (unsigned long)uart_errors, (unsigned long)rx_overruns,
-           (unsigned int)cluster_count, (unsigned int)MIN_CLUSTER_POINTS);
+    outterm_printf("RADAR sensor=%s raw=%u window_ms=%lu frames=%u lost=%lu invalid=%lu "
+                   "uart_errors=%lu rx_overruns=%lu clusters=%u min_points=%u\r\n",
+                   innosent_sensor_name(active_sensor), raw_diagnostic_enabled ? 1U : 0U,
+                   (unsigned long)elapsed_ms, (unsigned int)window_frame_count,
+                   (unsigned long)lost_lists_window, (unsigned long)invalid_frames_window,
+                   (unsigned long)uart_errors, (unsigned long)rx_overruns,
+                   (unsigned int)cluster_count, (unsigned int)MIN_CLUSTER_POINTS);
 
     for (i = 0U; i < cluster_count; ++i)
     {
-        printf("CLUSTER id=%u points_mean=%.2f range_mean_m=%.3f range_sd_m=%.3f "
-               "velocity_mean_mps=%.3f frames_seen=%u total_points=%u\r\n",
-               (unsigned int)i, (double)clusters[i].mean_points,
-               (double)clusters[i].mean_centroid_range_m,
-               (double)clusters[i].centroid_range_std_m,
-               (double)clusters[i].mean_velocity_mps,
-               (unsigned int)clusters[i].frames_seen,
-               (unsigned int)clusters[i].total_points);
+        outterm_printf("CLUSTER id=%u points_mean=%.2f range_mean_m=%.3f range_sd_m=%.3f "
+                       "velocity_mean_mps=%.3f frames_seen=%u total_points=%u\r\n",
+                       (unsigned int)i, (double)clusters[i].mean_points,
+                       (double)clusters[i].mean_centroid_range_m,
+                       (double)clusters[i].centroid_range_std_m,
+                       (double)clusters[i].mean_velocity_mps,
+                       (unsigned int)clusters[i].frames_seen,
+                       (unsigned int)clusters[i].total_points);
         if (clusters[i].angle_valid)
         {
-            printf("CLUSTER_ANGLE id=%u angle_mean_deg=%.2f angle_sd_deg=%.2f\r\n",
-                   (unsigned int)i, (double)clusters[i].mean_angle_deg,
-                   (double)clusters[i].angle_std_deg);
+            outterm_printf("CLUSTER_ANGLE id=%u angle_mean_deg=%.2f angle_sd_deg=%.2f\r\n",
+                           (unsigned int)i, (double)clusters[i].mean_angle_deg,
+                           (double)clusters[i].angle_std_deg);
         }
     }
 

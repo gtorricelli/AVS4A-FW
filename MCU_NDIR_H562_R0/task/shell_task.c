@@ -73,7 +73,7 @@ static shell_command_st commands[] =
     {"batt","                 battery data"                 , NULL, battery, {NULL}},
     {"sens","                 sensor data"                  , NULL, sensor, {NULL}},
 	{"debms","                IN PIR debounce"              , NULL, setMinPIRms, {NULL}},
-	{"pir","                  pir measure task"             , NULL, pir, {NULL}},
+	{"pir","                  read current PIR inputs"       , NULL, pir, {NULL}},
 	{"tim4PIR","              IN PIR time before signal"    , NULL, setMinPIRsg, {NULL}},
     {"date","                 Set/Get rtc time"             , NULL, system_date, {NULL}},
 	{"fw","                   FIRMWARE UPGRADE"             , NULL, fwupgrade, {NULL}},
@@ -557,31 +557,15 @@ static int32_t radar_config(char *_opts[])
     return ENOERR;
 }
 
-static uint32_t shellFuncTime = 0;
-
-void * pir_measure()
-{
-	static uint32_t value = 0;
-	int res;
-	char ChValue;
-	if(time_elapsed_ms(shellFuncTime, 100)==0) return 0;
-	shellFuncTime = get_clock_ms();
-    printf(CLS CURPOS(0,0) ATTR_FRED "\r\PIR MEASURE \r\n" );
-    printf(ATTR_FGREEN);
-
-    printf("P[0]:%d P[1]:%d P[2]:%d P[3]:%d \r\n",
-    		getPirvalue(0),
-    		getPirvalue(1),
-    		getPirvalue(2),
-    		getPirvalue(3)
-			);
-	return 0;
-}
 static int32_t pir               (char *_opts[])
 {
-	shellFuncTime = get_clock_ms();
-	launch_shell_process(pir_measure);
-	return 0;
+	(void)_opts;
+	printf("PIR P0=%u P1=%u P2=%u P3=%u (events: service CDC2)\r\n",
+			(unsigned int)getPirvalue(0),
+			(unsigned int)getPirvalue(1),
+			(unsigned int)getPirvalue(2),
+			(unsigned int)getPirvalue(3));
+	return ENOERR;
 }
 
 static int32_t system_date       (char *_opts[])

@@ -93,4 +93,5 @@ int  request_halt(void);
 int  request_date(void);
 int  send_ping(void);
 uint16_t outterm_send(uint8_t * buff, uint16_t len);
+uint16_t outterm_printf(const char *format, ...);
 #endif /* SERIAL_COM_TASK_H_ */

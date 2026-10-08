@@ -1,7 +1,17 @@
 # InnoSenT RadarSensing - IMD-2000 / IMD-2002 prototype
 
 The same USART1 acquisition task supports IMD-2000 and IMD-2002 and writes one
-aggregate report per second to the existing USB debug console.
+aggregate report per second to the dedicated USB service port (`CDC_SERIAL2`).
+The interactive shell remains on `CDC_SERIAL1`, so unsolicited radar and PIR
+telemetry cannot interfere with commands or command responses.
+
+The three USB CDC instances are assigned as follows:
+
+| CDC instance | Purpose |
+|---|---|
+| `CDC_SERIAL0` | CPU/Linux binary protocol |
+| `CDC_SERIAL1` | Interactive debug shell |
+| `CDC_SERIAL2` | Radar reports, raw radar diagnostics and PIR events |
 
 ## Hardware connection
 
@@ -42,13 +52,17 @@ The debug shell permits runtime selection:
 radar                 # current configuration
 radar imd2000         # select IMD-2000 and restart acquisition
 radar imd2002         # select IMD-2002 and restart acquisition
-radar raw on          # print every decoded target tuple
+radar raw on          # send every decoded target tuple to service CDC2
 radar raw off         # aggregate output only
 ```
 
 Raw records contain list ID, target index, range, velocity, signal and ETA.
-IMD-2002 records also contain `angle_deg`. Raw mode can produce a high console
-data rate and should be enabled only while collecting diagnostic logs.
+IMD-2002 records also contain `angle_deg`. Raw mode can produce a high service
+port data rate and should be enabled only while collecting diagnostic logs.
+
+The `pir` shell command performs one immediate reading and returns to the
+prompt. Automatic `PIR event=n` notifications are sent only to the service
+port.
 
 ## One-second report
 
